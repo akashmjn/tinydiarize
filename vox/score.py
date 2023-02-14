@@ -200,7 +200,7 @@ def summarize_result(result_json):
 
     print("\n\n"+"-"*50)
     print(f"Results for: {result_json}")
-    print(f"Side-by-side analysis file at: {result_json.replace('.json', '.sbs')}\n")
+    print(f"Side-by-side analysis file at: {result_json.replace('result-', '').replace('.json', '.sbs')}\n")
 
     print(f'WER: {wer["wer"]:.4f} ({wer["numErrors"]}/{wer["numWordsInReference"]})')
     print(f'\tErrors: {wer["substitutions"]}/{wer["insertions"]}/{wer["deletions"]} [S/I/D]')
