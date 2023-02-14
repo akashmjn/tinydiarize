@@ -212,7 +212,7 @@ def summarize_result(result_json):
     print(f'Speaker turn Recall: {speaker_turn["recall"]:.2f} ({speaker_turn["correct"]}/{speaker_turn["numWordsInReference"]})')
     print(f'\tErrors: {speaker_turn["substitutions_fn"]}/{speaker_turn["deletions"]} [S/D]')
 
-    print("-"*40)
+    print("-"*50)
 
 
 def score_fstalign(ref_nlp, reco_file, work_dir="./fstalign_scoring", speaker_turn_mode="segment"):
