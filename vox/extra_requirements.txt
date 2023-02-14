@@ -1,0 +1,2 @@
+git+https://github.com/pyannote/pyannote-audio
+datasets
