@@ -189,12 +189,9 @@ def parse_result(wer_json, speaker_turn_json):
     result["spk_turn_recall"] = {recall_map[k]: speaker_turn[k] for k in recall_map}
     result["spk_turn_recall"]["insertions"] = 0
 
-    # TODO@Akash - parse the side-by-side analysis file and add it to the result
-
     result = pd.DataFrame.from_dict(result, orient='index', columns=columns)
     # reset the index to make the metric name a column
     result = result.reset_index().rename(columns={'index': 'metric'})
-    # TODO@Akash - should ideally make this a unique result file path
     result["result_name"] = Path(speaker_turn_json).stem
 
     return result
@@ -203,7 +200,7 @@ def parse_result(wer_json, speaker_turn_json):
 def score_fstalign(ref_nlp, reco_file, work_dir="./fstalign_scoring", speaker_turn_mode="segment"):
 
     # assert that the current directory is the parent dir of this file
-    assert Path(__file__).parent == Path.cwd(), f"Please run scoring from the parent directory of {__file__} (so that docker mounted paths work correctly)"
+    assert Path(__file__).parent.absolute() == Path.cwd(), f"Please run scoring from the parent directory of {__file__} (so that docker mounted paths work correctly)"
 
     # make reco/ref_nlp paths relative to parent dir of this file (so that docker mounted paths work correctly)
     ref_nlp = str(Path(ref_nlp).relative_to(Path(__file__).parent))
@@ -224,19 +221,18 @@ def score_fstalign(ref_nlp, reco_file, work_dir="./fstalign_scoring", speaker_tu
         reco_nlp = whisper_reco_to_nlp(reco_file, inputs_dir, speaker_turn_mode=speaker_turn_mode)
         reco_nlp_for_wer = whisper_reco_to_nlp(reco_file, inputs_dir, speaker_turn_mode=None)
 
+    def _run_script(cmdlist):
+        print("Running command: ", cmdlist)
+        result = subprocess.check_output(cmdlist).decode('utf-8').splitlines()[-1]
+        assert result.startswith('RESULT='), "Unexpected output from "+SCRIPT
+        result_file = result.split('=')[1]
+        assert os.path.exists(result_file), "Result file not found"
+        return result_file
+
     # we need to call fstalign twice, once for WER and once for speaker turn errors
     output_dir = str(Path(work_dir)/"results")
-
-    # TODO@Akash - make this neat
-    result = subprocess.check_output(['sh', SCRIPT, ref_nlp_for_wer, reco_nlp_for_wer, output_dir]).decode('utf-8').splitlines()[-1]
-    assert result.startswith('RESULT='), "Unexpected output from "+SCRIPT
-    wer_json = result.split('=')[1]
-    assert os.path.exists(wer_json), "WER result file not found"
-    # run scoring script on files with speaker turn tokens for precision/recall
-    result = subprocess.check_output(['sh', SCRIPT, ref_nlp, reco_nlp, output_dir]).decode('utf-8').splitlines()[-1]
-    assert result.startswith('RESULT='), "Unexpected output from "+SCRIPT
-    speaker_turn_json = result.split('=')[1]
-    assert os.path.exists(speaker_turn_json), "speaker_turn result file not found"
+    wer_json = _run_script(['sh', SCRIPT, ref_nlp_for_wer, reco_nlp_for_wer, output_dir])
+    speaker_turn_json = _run_script(['sh', SCRIPT, ref_nlp, reco_nlp, output_dir])
 
     # process result
     return parse_result(wer_json, speaker_turn_json)
@@ -249,7 +245,7 @@ if __name__ == "__main__":
     parser.add_argument("glob_pattern", help="glob pattern for reco files")
     parser.add_argument("--ref_nlp", help="reference nlp file", default="./fstalign_scoring/inputs/earnings21-4341191-ref_tagged.nlp")
     parser.add_argument("--work_dir", help="working directory for fstalign scoring", default="./fstalign_scoring")
-    parser.add_argument("--speaker_turn_mode", help="speaker turn mode", choices=["segment", "punctuation", "token", "punctuation_token"], default="punctuation")
+    parser.add_argument("--speaker_turn_mode", help="speaker turn mode", choices=["segment", "punctuation", "token", "punctuation_token"], default="segment")
     args = parser.parse_args()
 
     ref_nlp = args.ref_nlp
