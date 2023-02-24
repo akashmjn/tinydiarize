@@ -13,7 +13,7 @@ set -x
 
 OUTDIR=$OUTDIR/$(basename $REF .nlp)/$(basename $HYP .nlp)
 mkdir -p $OUTDIR
-rm $OUTDIR/$FNAME.log  # logfile appears to get appended to
+# rm $OUTDIR/$FNAME.log  # logfile appears to get appended to
 # OUTDIR=workdir/$OUTDIR
 
 # the --wer-sidecar option is not used in the current version of the code
@@ -32,5 +32,5 @@ fi
 # command is run inside the docker container
 docker run --rm -it -v $PWD:/fstalign/workdir revdotcom/fstalign $CMD
 
-# print output filename to stdout
-echo "RESULT="$OUTDIR/$FNAME.json
+# print absolute path of output filename to stdout
+echo "RESULT="$(realpath $OUTDIR/$FNAME.json)

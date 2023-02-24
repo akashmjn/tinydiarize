@@ -4,6 +4,7 @@ import sys
 import subprocess
 import argparse
 import os
+import pandas as pd
 from glob import glob
 from pathlib import Path
 from copy import deepcopy
@@ -11,13 +12,13 @@ from copy import deepcopy
 DESCRIPTION = """
 Score whisper reco with speaker turns added.
 WER and speaker turn errors are computed using revdotcom/fstalign via edit distance of ref/reco transcripts.
-For speaker turns errors, transcripts are re-aligned with a special token
-inserted and we use token-level precision/recall errors exposed by the tool.
+Speaker turn errors are measured by inserting a special token, re-aligning via edit distance
+and using the token-level errors (e.g. precision/recall) exposed by the tool.
 """
 
 
 # need to replace <|speakerturn|> since fstalign treats '|' as a separator
-SCRIPT = "score_fstalign.sh"
+SCRIPT = Path(__file__).parent.absolute() / "score_fstalign.sh"
 WHISPER_ST_TOKEN = "<|speakerturn|>"
 ST_TOKEN = "SPEAKER__TURN"
 PUNCTUATION = set(['.', '?', '!', ',', ';'])
@@ -77,6 +78,7 @@ def tag_ref_nlp(nlp_file, output_dir=None, tag_speaker_turn=True):
             speaker = line.split('|')[1]
 
     print(f"Written {i+n} lines to {output_file}")            
+    return output_file
 
 
 # take whisper reco json, write out in nlp format, with speaker turn tokens added in two modes -
@@ -153,72 +155,64 @@ def strip_speaker_turn_tokens(nlp_file, output_dir=None):
     return output_file
 
 
-def process_result(wer_json, speaker_turn_json):
+def parse_result(wer_json, speaker_turn_json):
     with open(wer_json) as fp:
         wer_result = json.load(fp)
     with open(speaker_turn_json) as fp:
         speaker_turn_result = json.load(fp)
     
-    processed_result = dict(wer_overall={}, speaker_turn={})
+    columns = ["value", "denominator", "numerator", "deletions", "insertions", "substitutions"]
+    metrics = ["wer_overall", "wer_speaker_switch", "spk_turn_precision", "spk_turn_recall"]
+    result = dict.fromkeys(metrics)
 
     # WER results
-    processed_result["wer_overall"] = deepcopy(wer_result['wer']['bestWER'])
-    for k in ['meta', 'precision', 'recall']:
-        processed_result["wer_overall"].pop(k)
-    processed_result["wer_speaker_switch"] = deepcopy(wer_result['wer']['speakerSwitchWER'])
-    processed_result["wer_speaker_switch"].pop('meta')
+    wer_map = {"wer": "value", "numWordsInReference": "denominator", "numErrors": "numerator"}
+    for k in ["deletions", "insertions", "substitutions"]:
+        wer_map[k] = k
+    # insert values corresponding to columns
+    result["wer_overall"] = {wer_map[k]: wer_result['wer']['bestWER'][k] for k in wer_map}
+    result["wer_overall"]["value"] *= 100.0
+    result["wer_speaker_switch"] = {wer_map[k]: wer_result['wer']['speakerSwitchWER'][k] for k in wer_map}
+    result["wer_speaker_switch"]["value"] *= 100.0
 
     # speaker turn results
     speaker_turn = deepcopy(speaker_turn_result['wer']['unigrams'][ST_TOKEN.lower()])
-    
-    # account for errors esp substitution_fp
-    # TODO@Akash - double check this logic, how to account for errors esp substitution_fp
-    speaker_turn['substitutions'] = sum([speaker_turn[k] for k in ['substitutions_fn', 'substitutions_fp']])
-    speaker_turn['numWordsInReference'] = sum([speaker_turn[k] for k in ['correct', 'deletions', 'substitutions_fn']])
-    speaker_turn['numErrors'] = sum([speaker_turn[k] for k in ['substitutions', 'insertions', 'deletions']])
-    # for details in logging 
     speaker_turn['numPredictions'] = sum([speaker_turn[k] for k in ['correct', 'insertions', 'substitutions_fp']])
+    speaker_turn['numWordsInReference'] = sum([speaker_turn[k] for k in ['correct', 'deletions', 'substitutions_fn']])
+    # insert values corresponding to columns
+    precision_map = {"precision": "value", "numPredictions": "denominator", "correct": "numerator",
+                     "insertions": "insertions", "substitutions_fp": "substitutions"}
+    result["spk_turn_precision"] = {precision_map[k]: speaker_turn[k] for k in precision_map}
+    result["spk_turn_precision"]["deletions"] = 0
+    recall_map = {"recall": "value", "numWordsInReference": "denominator", "correct": "numerator",
+                  "deletions": "deletions", "substitutions_fn": "substitutions"}    
+    result["spk_turn_recall"] = {recall_map[k]: speaker_turn[k] for k in recall_map}
+    result["spk_turn_recall"]["insertions"] = 0
 
-    processed_result['speaker_turn'] = speaker_turn
+    # TODO@Akash - parse the side-by-side analysis file and add it to the result
 
-    result_json = str(Path(speaker_turn_json).parent / ("result-" + Path(speaker_turn_json).name))
-    with open(result_json, 'w') as fp:
-        json.dump(processed_result, fp, indent=4)
+    result = pd.DataFrame.from_dict(result, orient='index', columns=columns)
+    # reset the index to make the metric name a column
+    result = result.reset_index().rename(columns={'index': 'metric'})
+    # TODO@Akash - should ideally make this a unique result file path
+    result["result_name"] = Path(speaker_turn_json).stem
 
-    return result_json, processed_result
-
-
-def summarize_result(result_json):
-    with open(result_json) as fp:
-        result = json.load(fp)
-
-    wer = result['wer_overall']
-    wer_spk = result['wer_speaker_switch']
-    speaker_turn = result['speaker_turn']
-
-    # TODO@Akash - make this 2 pandas dataframes
-
-    print("\n\n"+"-"*50)
-    print(f"Results for: {result_json}")
-    print(f"Side-by-side analysis file at: {result_json.replace('result-', '').replace('.json', '.sbs')}\n")
-
-    print(f'WER: {wer["wer"]:.4f} ({wer["numErrors"]}/{wer["numWordsInReference"]})')
-    print(f'\tErrors: {wer["substitutions"]}/{wer["insertions"]}/{wer["deletions"]} [S/I/D]')
-    print(f'Speaker switch WER: {wer_spk["wer"]:.4f} ({wer_spk["numErrors"]}/{wer_spk["numWordsInReference"]})')
-    print(f'\tErrors: {wer_spk["substitutions"]}/{wer_spk["insertions"]}/{wer_spk["deletions"]} [S/I/D]')
-
-    print(f'Speaker turn Precision: {speaker_turn["precision"]:.2f} ({speaker_turn["correct"]}/{speaker_turn["numPredictions"]})')
-    print(f'\tErrors: {speaker_turn["substitutions_fp"]}/{speaker_turn["insertions"]} [S/I]')
-    print(f'Speaker turn Recall: {speaker_turn["recall"]:.2f} ({speaker_turn["correct"]}/{speaker_turn["numWordsInReference"]})')
-    print(f'\tErrors: {speaker_turn["substitutions_fn"]}/{speaker_turn["deletions"]} [S/D]')
-
-    print("-"*50)
+    return result
 
 
 def score_fstalign(ref_nlp, reco_file, work_dir="./fstalign_scoring", speaker_turn_mode="segment"):
 
+    # assert that the current directory is the parent dir of this file
+    assert Path(__file__).parent == Path.cwd(), f"Please run scoring from the parent directory of {__file__} (so that docker mounted paths work correctly)"
+
+    # make reco/ref_nlp paths relative to parent dir of this file (so that docker mounted paths work correctly)
+    ref_nlp = str(Path(ref_nlp).relative_to(Path(__file__).parent))
+    reco_file = str(Path(reco_file).relative_to(Path(__file__).parent))
+
     inputs_dir = Path(work_dir)/"inputs"
     os.makedirs(inputs_dir, exist_ok=True)
+    if not Path(ref_nlp).stem.endswith("_tagged"):
+        ref_nlp = tag_ref_nlp(ref_nlp)
     ref_nlp_for_wer = strip_speaker_turn_tokens(ref_nlp, inputs_dir)
 
     if Path(reco_file).suffix == '.nlp':
@@ -245,7 +239,7 @@ def score_fstalign(ref_nlp, reco_file, work_dir="./fstalign_scoring", speaker_tu
     assert os.path.exists(speaker_turn_json), "speaker_turn result file not found"
 
     # process result
-    return process_result(wer_json, speaker_turn_json)
+    return parse_result(wer_json, speaker_turn_json)
 
 
 if __name__ == "__main__":
@@ -265,10 +259,10 @@ if __name__ == "__main__":
     if input(f"Scoring {len(reco_files)} files under: {glob_pattern}, [y/n]\t").lower()=='n':
         exit()
 
-    result_jsons = []
+    results = []
     for reco_file in reco_files:
-        result_json, _ = score_fstalign(ref_nlp, reco_file, work_dir=args.work_dir, speaker_turn_mode=args.speaker_turn_mode)
-        result_jsons.append(result_json)
+        results.append(score_fstalign(ref_nlp, reco_file, work_dir=args.work_dir, speaker_turn_mode=args.speaker_turn_mode))
     
-    for result_json in result_jsons:
-        summarize_result(result_json)
+    result_df = pd.concat(results)
+    print(result_df.groupby(["metric", "result_name"]).sum())
+    
