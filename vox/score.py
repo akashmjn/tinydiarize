@@ -235,7 +235,37 @@ def score_fstalign(ref_nlp, reco_file, work_dir="./fstalign_scoring", speaker_tu
     speaker_turn_json = _run_script(['sh', SCRIPT, ref_nlp, reco_nlp, output_dir])
 
     # process result
-    return parse_result(wer_json, speaker_turn_json)
+    result = parse_result(wer_json, speaker_turn_json)
+
+    sbs_analysis_file = str(speaker_turn_json).replace(".json", ".sbs")
+    result["sbs_analysis_file"] = sbs_analysis_file
+    # TODO@Akash - parse the side-by-side analysis file and add it to the result
+    # errors = parse_analysis_file(sbs_analysis_file)
+
+    return result
+
+
+def parse_analysis_file(sbs_analysis_file, context_lines=10):
+    # precision error regex: (\tspeaker__turn\s+ERR)
+    # recall error regex: (speaker__turn\t<del>)
+    with open(sbs_analysis_file) as f:
+        lines = f.read().splitlines()
+
+    # save line numbers where precision/recall errors occur
+    precision_errors = []
+    recall_errors = []
+    # TODO@Akash - add the index of the token in the reference 
+    for i, line in enumerate(lines):
+        if re.search(r"\tspeaker__turn\s+ERR", line):
+            # also save context of lines before and after
+            context = "\n".join(lines[max(0, i-context_lines):i+context_lines])
+            precision_errors.append(dict(line=i, context=context))
+        if re.search(r"speaker__turn\t<del>", line):
+            # also save context of 5 lines before and after
+            context = "\n".join(lines[max(0, i-context_lines):i+context_lines])
+            recall_errors.append(dict(line=i, context=context))
+    
+    return precision_errors, recall_errors
 
 
 if __name__ == "__main__":
