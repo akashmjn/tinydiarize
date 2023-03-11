@@ -4,6 +4,7 @@ import sys
 import subprocess
 import argparse
 import os
+import shutil
 import pandas as pd
 from glob import glob
 from pathlib import Path
@@ -50,11 +51,11 @@ def _tokenize_line(line):
 
 
 # take earnings nlp file, convert and add speaker turn tags, remove extra entity tags
-def tag_ref_nlp(nlp_file, output_dir=None, tag_speaker_turn=True):
+def prepare_ref_nlp(nlp_file, output_dir=None, tag_speaker_turns=True):
     with open(nlp_file) as fp:
         raw_lines = fp.read().splitlines()
 
-    suffix = '_tagged.nlp' if tag_speaker_turn else '.nlp'
+    suffix = '_tagged.nlp' if tag_speaker_turns else '.nlp'
     fname = Path(nlp_file).name.replace('.nlp', suffix)
     output_dir = Path(nlp_file).parent if output_dir is None else Path(output_dir)
     output_file = output_dir / fname
@@ -67,7 +68,7 @@ def tag_ref_nlp(nlp_file, output_dir=None, tag_speaker_turn=True):
             elif i==1:
                 speaker = line.split('|')[1]
 
-            if line.split('|')[1] != speaker and tag_speaker_turn:
+            if line.split('|')[1] != speaker and tag_speaker_turns:
                 # add the speaker turn tag
                 fp.write(f"{ST_TOKEN}|0||||LC|['{n}:SPEAKER_TURN']|['{n}']"+'\n')  # entity ids must be unique
                 n += 1
@@ -90,11 +91,11 @@ def whisper_reco_to_nlp(reco_json, output_dir=None, speaker_turn_mode='segment')
     """
     with open(reco_json) as fp:
         reco = json.load(fp)
-
-    suffix = f'_spkturn_{speaker_turn_mode}.nlp' if speaker_turn_mode else '.nlp'
-    # suffix = '_spktagged.nlp' if tag_speaker_turn else '.nlp'
-    fname = Path(reco_json).name.replace('.mp3', '').replace('.wav', '').replace('.json', suffix)
+    
+    # TODO@Akash - don't modify the output dir here, do outside
     output_dir = Path(reco_json).parent if output_dir is None else Path(output_dir)
+    suffix = f'_spkturn_{speaker_turn_mode}.nlp' if speaker_turn_mode else '.nlp'
+    fname = Path(reco_json).stem + suffix
     output_file = output_dir / fname
 
     n = 0
@@ -135,9 +136,8 @@ def strip_speaker_turn_tokens(nlp_file, output_dir=None):
     with open(nlp_file) as fp:
         raw_lines = fp.read().splitlines()
 
-    fname = Path(nlp_file).name.replace('.nlp', '_for_wer.nlp')
     output_dir = Path(nlp_file).parent if output_dir is None else Path(output_dir)
-    output_file = output_dir / fname
+    output_file = output_dir / Path(nlp_file).name.replace('.nlp', '_for_wer.nlp')
     n = 0
     with open(output_file, "w") as fp:
         for i, line in enumerate(raw_lines):
@@ -192,35 +192,59 @@ def parse_result(wer_json, speaker_turn_json):
     result = pd.DataFrame.from_dict(result, orient='index', columns=columns)
     # reset the index to make the metric name a column
     result = result.reset_index().rename(columns={'index': 'metric'})
-    result["result_name"] = Path(speaker_turn_json).stem
 
     return result
 
 
-def score_fstalign(ref_nlp, reco_file, work_dir="./fstalign_scoring", speaker_turn_mode="segment"):
+def score_fstalign(ref_nlp, reco_file, result_name, work_dir="./workdir_analysis/fstalign_scoring/results", speaker_turn_mode="segment"):
+    """
+    Output directory structure:
+    work_dir
+    ├── result_name-{speaker_turn_mode}
+    │   ├── wer
+    │   │   ├── inputs
+    │   │   ├── results
+    |   ├── spk_turn
+    |   |   ├── ... (same as wer)
+    │   ├── scoring_results.tsv
+    """
 
     # assert that the current directory is the parent dir of this file
-    assert Path(__file__).parent.absolute() == Path.cwd(), f"Please run scoring from the parent directory of {__file__} (so that docker mounted paths work correctly)"
+    assert Path(__file__).parent.absolute() == Path.cwd(), \
+        f"Please call score_fstalign from the parent directory of {__file__} (so that docker mounted paths work correctly)"
 
     # make reco/ref_nlp paths relative to parent dir of this file (so that docker mounted paths work correctly)
     ref_nlp = str(Path(ref_nlp).relative_to(Path(__file__).parent))
     reco_file = str(Path(reco_file).relative_to(Path(__file__).parent))
 
-    inputs_dir = Path(work_dir)/"inputs"
-    os.makedirs(inputs_dir, exist_ok=True)
-    if not Path(ref_nlp).stem.endswith("_tagged"):
-        ref_nlp = tag_ref_nlp(ref_nlp)
-    ref_nlp_for_wer = strip_speaker_turn_tokens(ref_nlp, inputs_dir)
+    def _make_subdir(parent_dir, subdir_name):
+        subdir = Path(parent_dir) / subdir_name
+        os.makedirs(subdir, exist_ok=True)
+        return subdir
+
+    # prepare output directories
+    result_id = f"{result_name}__{speaker_turn_mode}"
+    output_dir = Path(work_dir) / result_id
+    wer_dir = _make_subdir(output_dir, "wer")
+    spk_turn_dir = _make_subdir(output_dir, "spk_turn")
+
+    # prepare inputs
+    wer_inputs_dir = _make_subdir(wer_dir, "inputs")
+    ref_nlp_for_wer = prepare_ref_nlp(ref_nlp, wer_inputs_dir, tag_speaker_turns=False)
+    spk_turn_inputs_dir = _make_subdir(spk_turn_dir, "inputs")
+    ref_nlp = prepare_ref_nlp(ref_nlp, spk_turn_inputs_dir, tag_speaker_turns=True)
 
     if Path(reco_file).suffix == '.nlp':
-        reco_nlp = reco_file
-        reco_nlp_for_wer = strip_speaker_turn_tokens(reco_nlp, inputs_dir)
+        # copy the reco file to inputs_dir
+        reco_nlp = spk_turn_inputs_dir / Path(reco_file).name
+        shutil.copyfile(reco_file, reco_nlp)
+        reco_nlp_for_wer = strip_speaker_turn_tokens(reco_nlp, wer_inputs_dir)
     elif Path(reco_file).suffix == '.json':
         # convert to nlp format
         print("Converting reco to nlp format for scoring")
-        reco_nlp = whisper_reco_to_nlp(reco_file, inputs_dir, speaker_turn_mode=speaker_turn_mode)
-        reco_nlp_for_wer = whisper_reco_to_nlp(reco_file, inputs_dir, speaker_turn_mode=None)
-
+        reco_nlp = whisper_reco_to_nlp(reco_file, spk_turn_inputs_dir, speaker_turn_mode=speaker_turn_mode)
+        reco_nlp_for_wer = whisper_reco_to_nlp(reco_file, wer_inputs_dir, speaker_turn_mode=None)
+    
     def _run_script(cmdlist):
         print("Running command: ", cmdlist)
         result = subprocess.check_output(cmdlist).decode('utf-8').splitlines()[-1]
@@ -230,21 +254,21 @@ def score_fstalign(ref_nlp, reco_file, work_dir="./fstalign_scoring", speaker_tu
         return result_file
 
     # we need to call fstalign twice, once for WER and once for speaker turn errors
-    output_dir = str(Path(work_dir)/"results")
-    wer_json = _run_script(['sh', SCRIPT, ref_nlp_for_wer, reco_nlp_for_wer, output_dir])
-    speaker_turn_json = _run_script(['sh', SCRIPT, ref_nlp, reco_nlp, output_dir])
+    wer_result_dir = _make_subdir(wer_dir, "results")
+    wer_json = _run_script(['sh', SCRIPT, ref_nlp_for_wer, reco_nlp_for_wer, wer_result_dir])
+    spk_turn_result_dir = _make_subdir(spk_turn_dir, "results")
+    speaker_turn_json = _run_script(['sh', SCRIPT, ref_nlp, reco_nlp, spk_turn_result_dir])
 
     # process result
     result = parse_result(wer_json, speaker_turn_json)
+    result["result_id"] = result_id
+    # write to tsv file
+    result.to_csv(output_dir / "scoring_results.tsv", sep='\t', index=False)
 
-    sbs_analysis_file = str(speaker_turn_json).replace(".json", ".sbs")
-    result["sbs_analysis_file"] = sbs_analysis_file
-    # TODO@Akash - parse the side-by-side analysis file and add it to the result
-    # errors = parse_analysis_file(sbs_analysis_file)
-
-    return result
+    return result, output_dir
 
 
+# TODO@Akash - make into a class
 def parse_analysis_file(sbs_analysis_file, context_lines=10):
     # precision error regex: (\tspeaker__turn\s+ERR)
     # recall error regex: (speaker__turn\t<del>)
@@ -273,8 +297,8 @@ if __name__ == "__main__":
     print("NOTE: dont forget to pass the glob pattern inside quotes")
     parser = argparse.ArgumentParser(description=DESCRIPTION)
     parser.add_argument("glob_pattern", help="glob pattern for reco files")
-    parser.add_argument("--ref_nlp", help="reference nlp file", default="./fstalign_scoring/inputs/earnings21-4341191-ref_tagged.nlp")
-    parser.add_argument("--work_dir", help="working directory for fstalign scoring", default="./fstalign_scoring")
+    parser.add_argument("--ref_nlp", help="reference nlp file", default="./workdir_analysis/fstalign_scoring/references/earnings21-4341191-ref_tagged.nlp")
+    parser.add_argument("--work_dir", help="working directory for fstalign scoring", default="./workdir_analysis/fstalign_scoring/results")
     parser.add_argument("--speaker_turn_mode", help="speaker turn mode", choices=["segment", "punctuation", "token", "punctuation_token"], default="segment")
     args = parser.parse_args()
 
@@ -287,8 +311,12 @@ if __name__ == "__main__":
 
     results = []
     for reco_file in reco_files:
-        results.append(score_fstalign(ref_nlp, reco_file, work_dir=args.work_dir, speaker_turn_mode=args.speaker_turn_mode))
+        # convert reco_file to result_name in this way
+        # e.g. /home/whisper/vox/tiny.en/d1/f.json -> tiny.en-d1-f
+        result_name = "__".join(Path(reco_file).parts[-3:]).replace(".json", "")
+        df, _ = score_fstalign(ref_nlp, reco_file, result_name, work_dir=args.work_dir, speaker_turn_mode=args.speaker_turn_mode)
+        results.append(df)
     
     result_df = pd.concat(results)
-    print(result_df.groupby(["metric", "result_name"]).sum())
+    print(result_df.groupby(["metric", "result_id"]).sum())
     

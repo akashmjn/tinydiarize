@@ -1,5 +1,6 @@
 # Description: Score a hypothesis file using fstalign to get WER, per-token metrics, and side-by-side analysis
 # Usage: score_fstalign.sh <ref> <hyp> <outdir> [<wer-sidecar>]
+#           (the --wer-sidecar option is not used in the current version of the code)
 # Setup: docker pull revdotcom/fstalign  (more info at https://github.com/revdotcom/fstalign)
 
 
@@ -11,12 +12,6 @@ FNAME=$(basename $HYP .nlp)
 
 set -x
 
-OUTDIR=$OUTDIR/$(basename $REF .nlp)/$(basename $HYP .nlp)
-mkdir -p $OUTDIR
-# rm $OUTDIR/$FNAME.log  # logfile appears to get appended to
-# OUTDIR=workdir/$OUTDIR
-
-# the --wer-sidecar option is not used in the current version of the code
 # the current directory is mounted as /fstalign/workdir so all relative paths have to be relative to that
 PREFIX="/fstalign/workdir"
 CMD="/fstalign/build/fstalign wer \

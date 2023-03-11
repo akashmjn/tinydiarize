@@ -106,8 +106,12 @@ if __name__ == "__main__":
             if args.pipelines_to_run == "1.4":
                 modes.append("token")
             for mode in modes:
-                result = score_fstalign(ref_file, reco_file, speaker_turn_mode=mode)
-                result["method"] = f"spkturn_{mode}" if i == 1 else f"drz_post_sr" if i == 2 else f"drz_pre_sr"
+                # convert reco_file to result_name in this way
+                # e.g. /home/whisper/vox/tiny.en/d1/f.json -> tiny.en-d1
+                result_name = "__".join(Path(reco_file).parts[-3:-1])
+                logger.info(f"Scoring {result_name} with mode {mode} ..")
+                result, _ = score_fstalign(ref_file, reco_file, result_name, speaker_turn_mode=mode)
+                # result["method"] = f"spkturn_{mode}" if i == 1 else f"drz_post_sr" if i == 2 else f"drz_pre_sr"
                 results.append(result)
         os.chdir(Path(__file__).parent)         # change back to vox/scripts directory
 
