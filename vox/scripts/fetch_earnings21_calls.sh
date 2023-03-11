@@ -14,5 +14,5 @@ do
     # URL of transcript file
     URL=https://github.com/revdotcom/speech-datasets/raw/main/earnings21/transcripts/nlp_references/$i.nlp
     # use wget to download file from a URL
-    wget $URL -O ../fstalign_scoring/inputs/earnings21-$i-ref.nlp
+    wget $URL -O ../fstalign_scoring/references/earnings21-$i-ref.nlp
 done
