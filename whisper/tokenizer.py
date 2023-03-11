@@ -178,7 +178,8 @@ class Tokenizer:
 
     @cached_property
     def sot_lm(self) -> int:
-        return self._get_single_token_id("<|startoflm|>")
+        # return self._get_single_token_id("<|startoflm|>")
+        return self._get_single_token_id("<|speakerturn|>")
 
     @cached_property
     def sot_prev(self) -> int:
@@ -328,7 +329,8 @@ def build_tokenizer(name: str = "gpt2"):
         *[f"<|{lang}|>" for lang in LANGUAGES.keys()],
         "<|translate|>",
         "<|transcribe|>",
-        "<|startoflm|>",
+        # "<|startoflm|>",
+        "<|speakerturn|>",
         "<|startofprev|>",
         "<|nospeech|>",
         "<|notimestamps|>",

@@ -617,7 +617,7 @@ class DecodingTask:
                 self.tokenizer.translate,
                 self.tokenizer.sot,
                 self.tokenizer.sot_prev,
-                self.tokenizer.sot_lm,
+                # self.tokenizer.sot_lm,
             ]
         )
         if self.tokenizer.no_speech is not None:
