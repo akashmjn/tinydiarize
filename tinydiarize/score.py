@@ -97,7 +97,6 @@ def whisper_reco_to_nlp(reco_json, output_dir=None, speaker_turn_mode="segment")
     with open(reco_json) as fp:
         reco = json.load(fp)
 
-    # TODO@Akash - don't modify the output dir here, do outside
     output_dir = Path(reco_json).parent if output_dir is None else Path(output_dir)
     suffix = f"_spkturn_{speaker_turn_mode}.nlp" if speaker_turn_mode else ".nlp"
     fname = Path(reco_json).stem + suffix
@@ -391,7 +390,7 @@ if __name__ == "__main__":
     results = []
     for reco_file in reco_files:
         # convert reco_file to result_name in this way
-        # e.g. /home/whisper/vox/tiny.en/d1/f.json -> tiny.en-d1-f
+        # e.g. /home/whisper/tinydiarize/tiny.en/d1/f.json -> tiny.en-d1-f
         result_name = "__".join(Path(reco_file).parts[-3:]).replace(".json", "")
         df, _ = score_fstalign(
             ref_nlp,

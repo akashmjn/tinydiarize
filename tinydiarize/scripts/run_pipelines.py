@@ -8,12 +8,12 @@ import pandas as pd
 from diarize_post_sr import add_speakers_to_segments
 from diarize_pre_sr import run_pre_sr_pipeline
 
-sys.path.append(str(Path(__file__).parent.parent))  # vox directory
+sys.path.append(str(Path(__file__).parent.parent))  # tinydiarize directory
 from score import score_fstalign  # noqa: E402
 
 sys.path.append(
     str(Path(__file__).parent.parent.parent)
-)  # root directory of repo, above vox
+)  # root directory of repo, above tinydiarize
 import whisper  # noqa: E402
 import whisper.utils as wutils  # noqa: E402
 
@@ -124,14 +124,14 @@ if __name__ == "__main__":
     if "4" in pipelines_to_run:
         logger.info("Scoring all the results ..")
         results = []
-        os.chdir(Path(__file__).parent.parent)  # change to vox parent directory
+        os.chdir(Path(__file__).parent.parent)  # change to tinydiarize parent directory
         for i, reco_file in files_to_score:
             modes = ["segment", "punctuation"] if i == 1 else ["segment"]
             if args.pipelines_to_run == "1.4":
                 modes.append("token")
             for mode in modes:
                 # convert reco_file to result_name in this way
-                # e.g. /home/whisper/vox/tiny.en/d1/f.json -> tiny.en-d1
+                # e.g. /home/whisper/tinydiarize/tiny.en/d1/f.json -> tiny.en-d1
                 result_name = "__".join(Path(reco_file).parts[-3:-1])
                 logger.info(f"Scoring {result_name} with mode {mode} ..")
                 result, _ = score_fstalign(
@@ -139,7 +139,7 @@ if __name__ == "__main__":
                 )
                 # result["method"] = f"spkturn_{mode}" if i == 1 else f"drz_post_sr" if i == 2 else f"drz_pre_sr"
                 results.append(result)
-        os.chdir(Path(__file__).parent)  # change back to vox/scripts directory
+        os.chdir(Path(__file__).parent)  # change back to tinydiarize/scripts directory
 
         results_df = pd.concat(results)
         results_df["audio_file"] = Path(audio_file).name

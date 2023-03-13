@@ -13,7 +13,7 @@ from tqdm import tqdm
 
 sys.path.append(
     str(Path(__file__).parent.parent.parent)
-)  # root directory of repo, above vox
+)  # root directory of repo, above tinydiarize
 import whisper  # noqa: E402
 import whisper.utils as wutils  # noqa: E402
 
