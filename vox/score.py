@@ -1,14 +1,15 @@
-import json
-import re
-import sys
-import subprocess
 import argparse
+import json
 import os
+import re
 import shutil
-import pandas as pd
+import subprocess
+import sys
+from copy import deepcopy
 from glob import glob
 from pathlib import Path
-from copy import deepcopy
+
+import pandas as pd
 
 DESCRIPTION = """
 Score whisper reco with speaker turns added.

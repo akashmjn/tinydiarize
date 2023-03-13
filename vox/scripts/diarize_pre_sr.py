@@ -1,21 +1,21 @@
-import torch
 import json
+import logging
 import os
 import sys
-import logging
 from pathlib import Path
 from statistics import median
-from tqdm import tqdm
-from pyannote.audio import Pipeline, Audio
-from pyannote.core import Segment
+
+import torch
 from diarize_post_sr import convert_to_wav
+from pyannote.audio import Audio, Pipeline
+from pyannote.core import Segment
+from tqdm import tqdm
 
 sys.path.append(
     str(Path(__file__).parent.parent.parent)
 )  # root directory of repo, above vox
 import whisper
 import whisper.utils as wutils
-
 
 WHISPERMODEL = "tiny.en"
 TOKEN_FILE = "HF_TOK.txt"

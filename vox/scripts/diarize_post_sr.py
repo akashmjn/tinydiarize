@@ -1,19 +1,21 @@
 # Script adapted from https://huggingface.co/spaces/dwarkesh/whisper-speaker-recognition
 
-import datetime
-import subprocess
-import torch
-import wave
 import contextlib
+import datetime
 import json
 import os
+import subprocess
+import wave
+from pathlib import Path
+
 import numpy as np
-from pyannote.audio.pipelines.speaker_verification import PretrainedSpeakerEmbedding
+import torch
 from pyannote.audio import Audio
+from pyannote.audio.pipelines.speaker_verification import PretrainedSpeakerEmbedding
 from pyannote.core import Segment
 from sklearn.cluster import AgglomerativeClustering
 from tqdm import tqdm
-from pathlib import Path
+
 import whisper
 
 WHISPERMODEL = "tiny.en"

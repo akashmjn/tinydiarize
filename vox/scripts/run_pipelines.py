@@ -6,13 +6,14 @@ Script that will run the following pipelines:
 4. score all the results 
 """
 
-import os
-import sys
 import json
-import shutil
 import logging
-import pandas as pd
+import os
+import shutil
+import sys
 from pathlib import Path
+
+import pandas as pd
 from diarize_post_sr import add_speakers_to_segments
 from diarize_pre_sr import run_pre_sr_pipeline
 
@@ -24,7 +25,6 @@ sys.path.append(
 )  # root directory of repo, above vox
 import whisper
 import whisper.utils as wutils
-
 
 # set up logging with timestamp in 24hr format
 logging.basicConfig(
