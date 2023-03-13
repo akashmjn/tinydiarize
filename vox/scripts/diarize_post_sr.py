@@ -16,10 +16,7 @@ from pyannote.core import Segment
 from sklearn.cluster import AgglomerativeClustering
 from tqdm import tqdm
 
-import whisper
-
 WHISPERMODEL = "tiny.en"
-
 
 pyannote_audio = Audio()
 
@@ -29,7 +26,7 @@ def convert_to_wav(path):
         wav_path = ".".join(path.split(".")[:-1]) + ".wav"
         try:
             subprocess.call(["ffmpeg", "-i", path, "-ar", "16000", wav_path, "-y"])
-        except:
+        except Exception:
             return path, "Error: Could not convert file to .wav"
         path = wav_path
     return path, None

@@ -1,15 +1,6 @@
-DESCRIPTION = """
-Script that will run the following pipelines:
-1. transcribe audio with whisper 
-2. apply post_sr diarization
-3. run pre_sr diarization and retranscribe audio
-4. score all the results 
-"""
-
 import json
 import logging
 import os
-import shutil
 import sys
 from pathlib import Path
 
@@ -18,13 +9,21 @@ from diarize_post_sr import add_speakers_to_segments
 from diarize_pre_sr import run_pre_sr_pipeline
 
 sys.path.append(str(Path(__file__).parent.parent))  # vox directory
-from score import score_fstalign
+from score import score_fstalign  # noqa: E402
 
 sys.path.append(
     str(Path(__file__).parent.parent.parent)
 )  # root directory of repo, above vox
-import whisper
-import whisper.utils as wutils
+import whisper  # noqa: E402
+import whisper.utils as wutils  # noqa: E402
+
+DESCRIPTION = """
+Script that will run the following pipelines:
+1. transcribe audio with whisper
+2. apply post_sr diarization
+3. run pre_sr diarization and retranscribe audio
+4. score all the results
+"""
 
 # set up logging with timestamp in 24hr format
 logging.basicConfig(

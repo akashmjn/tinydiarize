@@ -14,8 +14,8 @@ from tqdm import tqdm
 sys.path.append(
     str(Path(__file__).parent.parent.parent)
 )  # root directory of repo, above vox
-import whisper
-import whisper.utils as wutils
+import whisper  # noqa: E402
+import whisper.utils as wutils  # noqa: E402
 
 WHISPERMODEL = "tiny.en"
 TOKEN_FILE = "HF_TOK.txt"
@@ -49,7 +49,7 @@ def transcribe_cropped_segments(audio_file, diarized_segments):
     # transcribe cropped segments with whisper
     model = whisper.load_model(WHISPERMODEL)
     pn_audio = Audio(sample_rate=16_000, mono=True)
-    logging.info(f"Transcribing file with whisper ..")
+    logging.info("Transcribing file with whisper ..")
     result = dict(text="", segments=[])
     for segment in tqdm(diarized_segments):
         waveform, sr = pn_audio.crop(

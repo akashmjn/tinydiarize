@@ -4,7 +4,6 @@ import os
 import re
 import shutil
 import subprocess
-import sys
 from copy import deepcopy
 from glob import glob
 from pathlib import Path
@@ -13,8 +12,9 @@ import pandas as pd
 
 DESCRIPTION = """
 Score whisper reco with speaker turns added.
-WER and speaker turn errors are computed using revdotcom/fstalign via edit distance of ref/reco transcripts.
-Speaker turn errors are measured by inserting a special token, re-aligning via edit distance
+WER and speaker turn errors are computed using revdotcom/fstalign via edit
+distance of ref/reco transcripts. Speaker turn errors are measured by inserting a
+special token, re-aligning via edit distance
 and using the token-level errors (e.g. precision/recall) exposed by the tool.
 """
 
