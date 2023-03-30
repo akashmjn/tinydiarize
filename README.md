@@ -1,13 +1,17 @@
 # tinyDiarize 🐥🗣️
 
-This is a lightweight, extension of OpenAI's [whisper](https://github.com/openai/whisper) models that adds speaker diarization to the transcription output via `<speakerturn>` tags. It can be used as a drop-in replacement for `whisper.transcribe` with the same API, no extra dependencies, and the added benefit of speaker diarization.
+This is a minimal extension of OpenAI's [Whisper](https://github.com/openai/whisper) models that adds speaker diarization to the transcription output via `<speakerturn>` tags. It can be used as a drop-in replacement for `whisper.transcribe` with the same API, and no extra dependencies.
+
+```
+whisper AUDIO --model small.en-tdrz SAME_ARGS
+```
 
 ![demo](trim-tinydiarize.gif)
 
-- Whisper checkpoints were finetuned using HuggingFace [transformers](https://github.com/huggingface/transformers) and [datasets](https://github.com/huggingface/datasets) with just 30mins of 1 GPU training :)
+- Whisper checkpoints were finetuned using HuggingFace [Transformers](https://github.com/huggingface/transformers) and [Datasets](https://github.com/huggingface/datasets) with just 30mins of 1 GPU training :)
 - Finetuning code will be released for full reproducibility
 - Includes a scoring setup using [revdotcom/fstalign](https://github.com/revdotcom/fstalign) that allows for easy error inspection and side-by-side analysis
-- Jupyter notebooks and an accompanying blog post will be released soon with more details 
+- Jupyter notebooks and an accompanying blog post will be released soon with more details
 
 Stay tuned! 📺
 

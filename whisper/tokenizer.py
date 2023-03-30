@@ -177,8 +177,8 @@ class Tokenizer:
         return self._get_single_token_id("<|startoftranscript|>")
 
     @cached_property
-    def sot_lm(self) -> int:
-        return self._get_single_token_id("<|startoflm|>")
+    def speaker_turn(self) -> int:  # replaces unused sot_lm token
+        return self._get_single_token_id("<|speakerturn|>")
 
     @cached_property
     def sot_prev(self) -> int:
@@ -328,7 +328,7 @@ def build_tokenizer(name: str = "gpt2"):
         *[f"<|{lang}|>" for lang in LANGUAGES.keys()],
         "<|translate|>",
         "<|transcribe|>",
-        "<|startoflm|>",
+        "<|speakerturn|>",  # hack and override "<|startoflm|>"
         "<|startofprev|>",
         "<|nospeech|>",
         "<|notimestamps|>",

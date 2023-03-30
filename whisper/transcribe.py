@@ -201,7 +201,11 @@ def transcribe(
         *, start: float, end: float, tokens: torch.Tensor, result: DecodingResult
     ):
         tokens = tokens.tolist()
-        text_tokens = [token for token in tokens if token < tokenizer.eot]
+        text_tokens = [
+            token
+            for token in tokens
+            if (token < tokenizer.eot) or (token == tokenizer.speaker_turn)
+        ]
         return {
             "seek": seek,
             "start": start,
@@ -249,6 +253,7 @@ def transcribe(
             timestamp_tokens: torch.Tensor = tokens.ge(tokenizer.timestamp_begin)
             single_timestamp_ending = timestamp_tokens[-2:].tolist() == [False, True]
 
+            # TODO@Akash - double check if implicitly missing speaker turns at end of chunk
             consecutive = torch.where(timestamp_tokens[:-1] & timestamp_tokens[1:])[0]
             consecutive.add_(1)
             if len(consecutive) > 0:
@@ -312,6 +317,9 @@ def transcribe(
                 # do not feed the prompt tokens if a high temperature was used
                 prompt_reset_since = len(all_tokens)
 
+            if verbose:
+                print("--" * 15)
+
             if word_timestamps:
                 add_word_timestamps(
                     segments=current_segments,
@@ -373,7 +381,7 @@ def cli():
     # fmt: off
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("audio", nargs="+", type=str, help="audio file(s) to transcribe")
-    parser.add_argument("--model", default="small", choices=available_models(), help="name of the Whisper model to use")
+    parser.add_argument("--model", default="small.en-tdrz", choices=available_models(), help="name of the Whisper model to use")
     parser.add_argument("--model_dir", type=str, default=None, help="the path to save model files; uses ~/.cache/whisper by default")
     parser.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu", help="device to use for PyTorch inference")
     parser.add_argument("--output_dir", "-o", type=str, default=".", help="directory to save the outputs")
