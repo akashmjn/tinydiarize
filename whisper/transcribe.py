@@ -201,8 +201,11 @@ def transcribe(
         *, start: float, end: float, tokens: torch.Tensor, result: DecodingResult
     ):
         tokens = tokens.tolist()
-        # text_tokens = [token for token in tokens if token < tokenizer.eot]
-        text_tokens = [token for token in tokens if (token < tokenizer.eot) or (token == tokenizer.sot_lm)]
+        text_tokens = [
+            token
+            for token in tokens
+            if (token < tokenizer.eot) or (token == tokenizer.speaker_turn)
+        ]
         return {
             "seek": seek,
             "start": start,
@@ -313,9 +316,9 @@ def transcribe(
             if not condition_on_previous_text or result.temperature > 0.5:
                 # do not feed the prompt tokens if a high temperature was used
                 prompt_reset_since = len(all_tokens)
-            
+
             if verbose:
-                print('--'*10)
+                print("--" * 10)
 
             if word_timestamps:
                 add_word_timestamps(
