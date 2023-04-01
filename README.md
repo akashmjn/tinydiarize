@@ -1,21 +1,43 @@
 # tinyDiarize 🐥🗣️
 
-This is a minimal extension of OpenAI's [Whisper](https://github.com/openai/whisper) models that adds speaker diarization to the transcription output via `<speakerturn>` tags. It can be used as a drop-in replacement for `whisper.transcribe` with the same API, and no extra dependencies.
+This is a minimal extension of OpenAI's [Whisper](https://github.com/openai/whisper) models that adds speaker diarization to transcripts via special `<|speakerturn|>` tokens. It can be used as a drop-in replacement for `whisper.transcribe` with the same API, and no extra dependencies.
+
+![demo](trim-tinydiarize.gif)
+
+## Why do this?
+
+- *Speaker diarization* is the task of identifying who spoke when in an audio recording. Along with spoken content, it is a key part of creating who-spoke-what transcripts, such as those for podcasts.
+- *tinyDiarize*  aims to be a minimal, interpretable  extension of original Whisper models (inspired by [minGPT](https://github.com/karpathy/minGPT)) that keeps extra dependencies to a minimum. 
+- By extending models with special `<|speakerturn|>` tokens (first introduced in [Kanda et al.](https://arxiv.org/abs/2003.12687)) a key part of the task can be solved cleanly, effectively, and at no extra cost. Stay tuned for details in an upcoming blog post! 📺
+- The simplicity (same structure checkpoint, few line edits of inference code) has the added benefit of ease of integration into existing ports like [whisper.cpp](https://github.com/ggerganov/whisper.cpp) that runs on MacBooks and iPhones.
+- By also releasing reproducible finetuning, we hope to enable others (or even OpenAI themselves!) to improve and extend support (multilingual, speech translation etc.)
+
+
+## Quickstart 
+
+Simply run the original setup & CLI with the `small.en-tdrz` model instead of `small.en`. That's it! 🎉
 
 ```
 whisper AUDIO --model small.en-tdrz SAME_ARGS
 ```
 
-![demo](trim-tinydiarize.gif)
+*(the code will auto-download the finetuned checkpoint, see  `whisper.__init__` for info)*
 
-- Whisper checkpoints were finetuned using HuggingFace [Transformers](https://github.com/huggingface/transformers) and [Datasets](https://github.com/huggingface/datasets) with just 30mins of 1 GPU training :)
-- Finetuning code will be released for full reproducibility
-- Includes a scoring setup using [revdotcom/fstalign](https://github.com/revdotcom/fstalign) that allows for easy error inspection and side-by-side analysis
-- Jupyter notebooks and an accompanying blog post will be released soon with more details
-
-Stay tuned! 📺
+## More info 
+- Whisper `small.en` checkpoints were finetuned using HuggingFace [Transformers](https://github.com/huggingface/transformers) and [Datasets](https://github.com/huggingface/datasets). This could be done relatively cheaply with just 30mins of 1 GPU training :)
+- Code will be released shortly for full reproducibility.
+- An important contribution of this repo is also a scoring/analysis setup using [revdotcom/fstalign](https://github.com/revdotcom/fstalign) that allows for interpretable error inspection and side-by-side analysis.
+- A blog post and accompanying Jupyter notebooks will be released soon with more details.
 
 ![metrics](landing-page-metrics.png)
+
+## Gotchas
+
+Note that this is still WIP and there are a few things to be aware of:
+- This was done only for the `small.en` English model mainly to demonstrate feasibility. 
+- Initial tests show it's possible to have minimal impact on the original accuracy (WER) of models. Just putting this in gotchas here until a more thorough analysis is done.
+- Only local diarization is handled so far (speaker turns). A (TBD) clustering step will be needed to group speaker turns into speaker A, B, C etc.
+- Stuff is still quite hacky and subject to change, so bear with us until things are released! 🙏
 
 # Whisper
 
