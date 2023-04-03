@@ -16,7 +16,7 @@ whisper AUDIO --model small.en-tdrz SAME_CLI_ARGS
 *(the code will auto-download the finetuned checkpoint, see  `whisper.__init__` for info)*
 
 You can try it out on videos from YouTube using this notebook
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/akashmjn/tinyDiarize/master/notebooks/Demo_YouTube.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/akashmjn/tinyDiarize/blob/demo/notebooks/Demo_YouTube.ipynb)
 
 https://user-images.githubusercontent.com/13268767/229617067-eca0f614-d334-480d-9801-7c30d88acdc6.mp4
 
