@@ -318,7 +318,7 @@ def transcribe(
                 prompt_reset_since = len(all_tokens)
 
             if verbose:
-                print("--" * 15)
+                print("-" * 25)
 
             if word_timestamps:
                 add_word_timestamps(
