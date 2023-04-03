@@ -4,24 +4,27 @@ This is a minimal extension of OpenAI's [Whisper](https://github.com/openai/whis
 
 ![demo](trim-tinydiarize.gif)
 
+## Quickstart 
+
+Simply run the original setup and use the `small.en-tdrz` model instead of `small.en`. That's it! 🎉
+
+```
+pip install -e .
+whisper AUDIO --model small.en-tdrz SAME_CLI_ARGS
+```
+
+*(the code will auto-download the finetuned checkpoint, see  `whisper.__init__` for info)*
+
+You can try it out on videos from YouTube using this notebook
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/akashmjn/tinyDiarize/master/notebooks/Demo_YouTube.ipynb)
+
 ## Why do this?
 
 - *Speaker diarization* is the task of identifying who spoke when in an audio recording. Along with spoken content, it is a key part of creating who-spoke-what transcripts, such as those for podcasts.
 - *tinyDiarize*  aims to be a minimal, interpretable  extension of original Whisper models (inspired by [minGPT](https://github.com/karpathy/minGPT)) that keeps extra dependencies to a minimum. 
 - By extending models with special `<|speakerturn|>` tokens (first introduced in [Kanda et al.](https://arxiv.org/abs/2003.12687)) a key part of the task can be solved cleanly, effectively, and at no extra cost. Stay tuned for details in an upcoming blog post! 📺
 - The simplicity (same structure checkpoint, few line edits of inference code) has the added benefit of ease of integration into existing ports like [whisper.cpp](https://github.com/ggerganov/whisper.cpp) that runs on MacBooks and iPhones.
-- By also releasing reproducible finetuning, we hope to enable others (or even OpenAI themselves!) to improve and extend support (multilingual, speech translation etc.)
-
-
-## Quickstart 
-
-Simply run the original setup & CLI with the `small.en-tdrz` model instead of `small.en`. That's it! 🎉
-
-```
-whisper AUDIO --model small.en-tdrz SAME_ARGS
-```
-
-*(the code will auto-download the finetuned checkpoint, see  `whisper.__init__` for info)*
+- By also releasing reproducible finetuning, we hope to enable others (or even OpenAI themselves!) to improve performance and extend support (multilingual, speech translation etc.)
 
 ## More info 
 - Whisper `small.en` checkpoints were finetuned using HuggingFace [Transformers](https://github.com/huggingface/transformers) and [Datasets](https://github.com/huggingface/datasets). This could be done relatively cheaply with just 30mins of 1 GPU training :)
