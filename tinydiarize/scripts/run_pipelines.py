@@ -8,12 +8,14 @@ import pandas as pd
 from diarize_post_sr import add_speakers_to_segments
 from diarize_pre_sr import run_pre_sr_pipeline
 
+# TODO@Akash - fix these treating tinydiarize as a package with relative imports
 sys.path.append(str(Path(__file__).parent.parent))  # tinydiarize directory
 from score import score_fstalign  # noqa: E402
 
+# TODO@Akash - fix these treating whisper as a package
 sys.path.append(
     str(Path(__file__).parent.parent.parent)
-)  # root directory of repo, above tinydiarize
+)  # root directory of whisper repo, above tinydiarize
 import whisper  # noqa: E402
 import whisper.utils as wutils  # noqa: E402
 
@@ -33,7 +35,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-WHISPERMODEL = "tiny.en"
+WHISPERMODEL = "small.en"
 
 
 if __name__ == "__main__":
