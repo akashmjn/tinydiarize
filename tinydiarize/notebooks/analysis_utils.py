@@ -2,6 +2,7 @@ import glob
 import re
 from pathlib import Path
 
+import IPython.display as ipd
 import matplotlib.pyplot as plt
 import pandas as pd
 from score import parse_analysis_file
@@ -15,8 +16,9 @@ def parse_result_id(input):
     # rename some methods to more understandable names
     method_map = {
         "drz_pre_sr__segment": "pyannote_pre_sr",
-        "segment": "time_segment",
-        "drz_post_sr__segment": "time_segment_clustered",
+        "segment": "segment_time",
+        "drz_post_sr__segment": "segment_time_clustered",
+        "token": "tdrz_token",
     }
 
     def _parse_result_id(result_id):
@@ -77,13 +79,51 @@ def query_metric_results(results_df, metric, groups=["call_id", "method"]):
 
 
 def plot_metric_results(metric_df, title=None, ax=None, legend=True):
-    # metric = metric_df.metric.iloc[0]
     if ax is None:
         ax = plt.gca()
-    metric_df.plot.barh(title=title, ax=ax, legend=legend)
+    metric_df.plot.barh(title=title, ax=ax, legend=legend, grid=True)
     if legend:
         # edit the legend of the plot so that it doesn't overlap with the plot
         _ = ax.legend(bbox_to_anchor=(1.05, 1), loc="upper left", borderaxespad=0.0)
+
+
+def inspect_errors(
+    results_df, analysis_results, result_key, precision_errors=[], recall_errors=[]
+):
+    model_id, call_id, method = result_key
+
+    print(f"Results for: {result_key}")
+    ipd.display(
+        results_df.query(
+            f'model=="{model_id}" and call_id=="{call_id}" and method=="{method}"'
+        ).iloc[:, :7]
+    )
+
+    spk_turn_errors = analysis_results[result_key]
+    print(f"Precision errors: {len(spk_turn_errors['precision_errors'])}")
+    print(f"Recall errors: {len(spk_turn_errors['recall_errors'])}")
+
+    if len(precision_errors) > 0:
+        print("\n\n", "--" * 5, "Precision errors:", "--" * 5)
+        for idx in precision_errors:
+            print("\nLine:", spk_turn_errors["precision_errors"][idx]["line"])
+            print(spk_turn_errors["precision_errors"][idx]["context"])
+
+    if len(recall_errors) > 0:
+        print("\n\n", "--" * 5, "Recall errors:", "--" * 5)
+        for idx in recall_errors:
+            print("\nLine:", spk_turn_errors["recall_errors"][idx]["line"])
+            print(spk_turn_errors["recall_errors"][idx]["context"])
+
+
+"""
+Nice-to-have TODOs:
+- parse analysis results into custom class with
+    errors uniquely identified by ref word #
+    configurable context
+- enable diff between two sets of errors
+- make a neat side-by-side fixed width print
+"""
 
 
 # function to print two strings side-by-side with a fixed width
