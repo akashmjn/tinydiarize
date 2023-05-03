@@ -338,6 +338,14 @@ def parse_analysis_file(sbs_analysis_file, context_lines=10):
     with open(sbs_analysis_file) as f:
         lines = f.read().splitlines()
 
+    def _get_context(i, lines, context_lines):
+        before = lines[max(0, i - context_lines) : i]
+        after = lines[i + 1 : i + context_lines + 1]
+        # apply a regex to clean up lines before and after
+        before = [re.sub(r"\t___.*", "\t\t", l) for l in before]
+        after = [re.sub(r"\t___.*", "\t\t", l) for l in after]
+        return "\n".join([*before, lines[i], *after])
+
     # save line numbers where precision/recall errors occur
     precision_errors = []
     recall_errors = []
@@ -345,11 +353,11 @@ def parse_analysis_file(sbs_analysis_file, context_lines=10):
     for i, line in enumerate(lines):
         if re.search(r"\tspeaker__turn\s+ERR", line):
             # also save context of lines before and after
-            context = "\n".join(lines[max(0, i - context_lines) : i + context_lines])
+            context = _get_context(i, lines, context_lines)
             precision_errors.append(dict(line=i, context=context))
         if re.search(r"speaker__turn\t<del>", line):
             # also save context of 5 lines before and after
-            context = "\n".join(lines[max(0, i - context_lines) : i + context_lines])
+            context = _get_context(i, lines, context_lines)
             recall_errors.append(dict(line=i, context=context))
 
     return precision_errors, recall_errors
