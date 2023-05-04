@@ -16,8 +16,8 @@ def parse_result_id(input):
     # rename some methods to more understandable names
     method_map = {
         "drz_pre_sr__segment": "pyannote_pre_sr",
-        "segment": "segment_time",
-        "drz_post_sr__segment": "segment_time_clustered",
+        "segment": "segment_timestamped",
+        "drz_post_sr__segment": "segment_timestamped_clustered",
         "token": "tdrz_token",
     }
 
