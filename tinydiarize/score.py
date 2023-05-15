@@ -351,11 +351,11 @@ def parse_analysis_file(sbs_analysis_file, context_lines=10):
     recall_errors = []
     # TODO@Akash - add the index of the token in the reference
     for i, line in enumerate(lines):
-        if re.search(r"\tspeaker__turn\s+ERR", line):
+        if re.match(r"^.*\tspeaker__turn\s+ERR", line):  # erroneous prediction
             # also save context of lines before and after
             context = _get_context(i, lines, context_lines)
             precision_errors.append(dict(line=i, context=context))
-        if re.search(r"speaker__turn\t<del>", line):
+        if re.match(r"^\s+speaker__turn\t.*\s+ERR", line):  # missed label
             # also save context of 5 lines before and after
             context = _get_context(i, lines, context_lines)
             recall_errors.append(dict(line=i, context=context))
