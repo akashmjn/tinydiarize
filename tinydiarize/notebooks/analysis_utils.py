@@ -106,13 +106,13 @@ def inspect_errors(
     if len(precision_errors) > 0:
         print("\n", "--" * 5, "Precision errors:", "--" * 5)
         for idx in precision_errors:
-            print("\nLine:", spk_turn_errors["precision_errors"][idx]["line"])
+            print(f"\nLine: {spk_turn_errors['precision_errors'][idx]['line']}, Index: {idx}")
             print(spk_turn_errors["precision_errors"][idx]["context"])
 
     if len(recall_errors) > 0:
         print("\n", "--" * 5, "Recall errors:", "--" * 5)
         for idx in recall_errors:
-            print("\nLine:", spk_turn_errors["recall_errors"][idx]["line"])
+            print(f"\nLine: {spk_turn_errors['recall_errors'][idx]['line']}, Index: {idx}")
             print(spk_turn_errors["recall_errors"][idx]["context"])
 
 
