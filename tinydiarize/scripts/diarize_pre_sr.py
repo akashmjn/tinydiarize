@@ -38,7 +38,7 @@ def run_pyannote_pipeline(audio_file):
     diarization = pipeline(audio_file)
     diarized_segments = []
     for turn, _, speaker in diarization.itertracks(yield_label=True):
-        s = turn.for_json()
+        s = {"start": turn.start, "end": turn.end}
         s["speaker"] = speaker
         diarized_segments.append(s)
 

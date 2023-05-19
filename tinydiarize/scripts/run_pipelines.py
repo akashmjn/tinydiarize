@@ -5,19 +5,11 @@ import sys
 from pathlib import Path
 
 import pandas as pd
+import whisper
+import whisper.utils as wutils
 from diarize_post_sr import add_speakers_to_segments
 from diarize_pre_sr import run_pre_sr_pipeline
-
-# TODO@Akash - fix these treating tinydiarize as a package with relative imports
-sys.path.append(str(Path(__file__).parent.parent))  # tinydiarize directory
-from score import score_fstalign  # noqa: E402
-
-# TODO@Akash - fix these treating whisper as a package
-sys.path.append(
-    str(Path(__file__).parent.parent.parent)
-)  # root directory of whisper repo, above tinydiarize
-import whisper  # noqa: E402
-import whisper.utils as wutils  # noqa: E402
+from tinydiarize.score import score_fstalign
 
 DESCRIPTION = """
 Script that will run the following pipelines:
@@ -57,25 +49,24 @@ if __name__ == "__main__":
         "--pipelines_to_run",
         help="pipelines to run",
         default="all",
-        choices=["all", "1.4", "1"],
+        choices=["all", "1,4", "1"],
     )
     args = parser.parse_args()
 
     files_to_score = []
     pipelines_to_run = (
-        args.pipelines_to_run.split(".")
+        args.pipelines_to_run.split(",")
         if args.pipelines_to_run != "all"
         else ["1", "2", "3", "4"]
     )
 
     # 1. transcribe audio with whisper
     logger.info("Transcribing audio with whisper ..")
-    audio_file = args.audio_file
-    output_dir = args.output_dir
+    audio_file, output_dir = args.audio_file, args.output_dir
     ref_file = Path(args.ref_file).resolve()
     os.makedirs(output_dir, exist_ok=True)
     transcribe_result_file = (
-        Path(output_dir) / f"{Path(audio_file).name}.json"
+        Path(output_dir) / f"{Path(audio_file).stem}.json"
     ).resolve()
     files_to_score.append((1, transcribe_result_file))
 
@@ -96,7 +87,7 @@ if __name__ == "__main__":
         drz_post_sr_output_dir = args.output_dir + "_drz_post_sr"
         os.makedirs(drz_post_sr_output_dir, exist_ok=True)
         drz_post_sr_reco_file = (
-            Path(drz_post_sr_output_dir) / f"{Path(audio_file).name}.json"
+            Path(drz_post_sr_output_dir) / f"{Path(audio_file).stem}.json"
         ).resolve()
         files_to_score.append((2, drz_post_sr_reco_file))
 
@@ -113,7 +104,7 @@ if __name__ == "__main__":
         drz_pre_sr_output_dir = args.output_dir + "_drz_pre_sr"
         os.makedirs(drz_pre_sr_output_dir, exist_ok=True)
         drz_pre_sr_reco_file = (
-            Path(drz_pre_sr_output_dir) / f"{Path(audio_file).name}.json"
+            Path(drz_pre_sr_output_dir) / f"{Path(audio_file).stem}.json"
         ).resolve()
         files_to_score.append((3, drz_pre_sr_reco_file))
 
@@ -129,7 +120,7 @@ if __name__ == "__main__":
         os.chdir(Path(__file__).parent.parent)  # change to tinydiarize parent directory
         for i, reco_file in files_to_score:
             modes = ["segment", "punctuation"] if i == 1 else ["segment"]
-            if args.pipelines_to_run == "1.4":
+            if args.pipelines_to_run == "1,4":  # TODO@Akash - fix support for token
                 modes.append("token")
             for mode in modes:
                 # convert reco_file to result_name in this way
