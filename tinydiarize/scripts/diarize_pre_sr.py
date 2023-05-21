@@ -59,7 +59,7 @@ def transcribe_cropped_segments(audio_file, diarized_segments):
         # make all sub-segments relative to the original audio file
         for si in r["segments"]:
             si["start"] += segment["start"]
-            si["end"] += segment["end"]
+            si["end"] += segment["start"]
             si["speaker"] = segment["speaker"]
 
         result["text"] += r["text"] + " "
@@ -74,7 +74,7 @@ def run_pre_sr_pipeline(audio_file, output_dir):
 
     # TODO@Akash - wrap this pattern into a decorator
     diarization_result_file = (
-        Path(output_dir) / f"{Path(audio_file).name}-diarization.json"
+        Path(output_dir) / f"{Path(audio_file).stem}-diarization.json"
     )
     if not Path(diarization_result_file).is_file():
         diarized_segments = run_pyannote_pipeline(audio_file)
@@ -101,7 +101,7 @@ def run_pre_sr_pipeline(audio_file, output_dir):
     # # notebook.reset()
 
     # TODO@Akash - wrap this pattern into a decorator
-    final_reco_file = Path(output_dir) / f"{Path(audio_file).name}.json"
+    final_reco_file = Path(output_dir) / f"{Path(audio_file).stem}.json"
     if not Path(final_reco_file).is_file():
         result = transcribe_cropped_segments(audio_file, diarized_segments)
         # with open(final_reco_file, 'w') as f:
