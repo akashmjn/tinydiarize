@@ -23,7 +23,7 @@ TOKEN_FILE = "HF_TOK.txt"
 logger = logging.getLogger(__name__)
 
 
-def run_pyannote_pipeline(audio_file):
+def run_pyannote_pipeline(audio_file, num_speakers=None):
     # run pyannote diarization pipeline and save resulting segments
     audio_file, _ = convert_to_wav(audio_file)
     logging.info("Creating pyannote diarization pipeline ..")
@@ -35,7 +35,7 @@ def run_pyannote_pipeline(audio_file):
     pipeline.to(torch.device("cuda" if torch.cuda.is_available() else "cpu"))
 
     logging.info("Processing audio with pyannote diarization pipeline ..")
-    diarization = pipeline(audio_file)
+    diarization = pipeline(audio_file, num_speakers=num_speakers)
     diarized_segments = []
     for turn, _, speaker in diarization.itertracks(yield_label=True):
         s = {"start": turn.start, "end": turn.end}
@@ -68,7 +68,7 @@ def transcribe_cropped_segments(audio_file, diarized_segments):
     return result
 
 
-def run_pre_sr_pipeline(audio_file, output_dir):
+def run_pre_sr_pipeline(audio_file, output_dir, num_speakers=None):
     os.makedirs(output_dir, exist_ok=True)
     audio_file, _ = convert_to_wav(audio_file)
 
@@ -77,7 +77,7 @@ def run_pre_sr_pipeline(audio_file, output_dir):
         Path(output_dir) / f"{Path(audio_file).stem}-diarization.json"
     )
     if not Path(diarization_result_file).is_file():
-        diarized_segments = run_pyannote_pipeline(audio_file)
+        diarized_segments = run_pyannote_pipeline(audio_file, num_speakers)
         with open(diarization_result_file, "w") as f:
             json.dump(diarized_segments, f, indent=4)
     else:
@@ -126,12 +126,13 @@ if __name__ == "__main__":
         type=str,
         default="../scratch/transcripts/tiny.en_drzpresr/earnings21-4341191/",
     )
+    parser.add_argument("--num_speakers", type=int, default=None)
     args = parser.parse_args()
 
     os.makedirs(args.output_dir, exist_ok=True)
 
     # run pipeline
-    result = run_pre_sr_pipeline(args.audio, args.output_dir)
+    result = run_pre_sr_pipeline(args.audio, args.output_dir, args.num_speakers)
 
     # save result
     writer = wutils.get_writer("all", args.output_dir)
