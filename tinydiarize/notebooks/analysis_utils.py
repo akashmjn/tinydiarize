@@ -66,6 +66,41 @@ def compile_results(results_dir):
     return results_df, analysis_results
 
 
+def summarize_results(results_df, omit_extra_results=True):
+    # omit some methods for brevity
+    if omit_extra_results:
+        # WARNING: silent modification by reference
+        results_df = results_df[results_df["method"] != "segment_timestamped_clustered"]
+        results_df = results_df[
+            ~(
+                (results_df["model"] == "small.en-tdrz")
+                & (results_df["method"] != "tdrz_token")
+            )
+        ]
+    # create a summarized dataframe that sums errors for each model+method combination
+    summary_df = (
+        results_df.groupby(["metric", "model", "method"])
+        .sum(numeric_only=True)
+        .reset_index()
+    )
+    summary_df["value"] = round(
+        summary_df["numerator"] / summary_df["denominator"] * 100, 2
+    )
+    # print some summary statistics
+    num_words = summary_df.query('metric == "wer_overall"')["denominator"].values[0]
+    num_speaker_turns = summary_df.query('metric == "spk_turn_recall"')[
+        "denominator"
+    ].values[0]
+    print(
+        f"Total # of words: {num_words}, Total # of speaker turns: {num_speaker_turns}"
+    )
+    # pivot to a row for each metric, and a column for each model+method combination
+    return (
+        summary_df.pivot(index="metric", columns=["model", "method"], values="value"),
+        results_df,
+    )
+
+
 def query_metric_results(results_df, metric, groups=["call_id", "method"]):
     """Query the results for a given metric"""
     metric_df = (
@@ -106,13 +141,17 @@ def inspect_errors(
     if len(precision_errors) > 0:
         print("\n", "--" * 5, "Precision errors:", "--" * 5)
         for idx in precision_errors:
-            print(f"\nLine: {spk_turn_errors['precision_errors'][idx]['line']}, Index: {idx}")
+            print(
+                f"\nLine: {spk_turn_errors['precision_errors'][idx]['line']}, Index: {idx}"
+            )
             print(spk_turn_errors["precision_errors"][idx]["context"])
 
     if len(recall_errors) > 0:
         print("\n", "--" * 5, "Recall errors:", "--" * 5)
         for idx in recall_errors:
-            print(f"\nLine: {spk_turn_errors['recall_errors'][idx]['line']}, Index: {idx}")
+            print(
+                f"\nLine: {spk_turn_errors['recall_errors'][idx]['line']}, Index: {idx}"
+            )
             print(spk_turn_errors["recall_errors"][idx]["context"])
 
 
