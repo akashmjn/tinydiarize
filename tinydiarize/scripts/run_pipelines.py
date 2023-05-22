@@ -39,6 +39,7 @@ def setup_logging(output_dir, audio_name):
 
 
 WHISPERMODEL = "small.en"
+TOKEN_FILE = "HF_TOK.txt"
 
 
 if __name__ == "__main__":
@@ -56,14 +57,19 @@ if __name__ == "__main__":
         help="provide the oracle number as we are only evaluating local diarization",
     )
     parser.add_argument(
+        "--pipelines_to_run",
+        help="pipelines to run. either 'all' or a comma separated list of numbers 1-5",
+        default="all",
+    )
+    parser.add_argument(
         "--whisper_model",
         help="valid whisper model name or path to checkpoint",
         default=WHISPERMODEL,
     )
     parser.add_argument(
-        "--pipelines_to_run",
-        help="pipelines to run. either 'all' or a comma separated list of numbers 1-5",
-        default="all",
+        "--hf_token_file",
+        help="text file containing HuggingFace token required for pyannote",
+        default=TOKEN_FILE,
     )
     args = parser.parse_args()
 
@@ -122,7 +128,11 @@ if __name__ == "__main__":
         drz_pre_sr_reco_file = (Path(drz_pre_sr_output_dir) / reco_fname).resolve()
         if not Path(drz_pre_sr_reco_file).is_file():
             result = run_pre_sr_pipeline(
-                audio_file, drz_pre_sr_output_dir, num_speakers=args.num_speakers
+                audio_file,
+                drz_pre_sr_output_dir,
+                num_speakers=args.num_speakers,
+                hf_token_file=args.hf_token_file,
+                whisper_model=args.whisper_model,
             )
             writer = wutils.get_writer("all", drz_pre_sr_output_dir)
             writer(result, audio_file)
