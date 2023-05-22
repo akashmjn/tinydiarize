@@ -4,10 +4,11 @@ import os
 from pathlib import Path
 
 import pandas as pd
-import whisper
-import whisper.utils as wutils
 from diarize_post_sr import add_speakers_to_segments
 from diarize_pre_sr import run_pre_sr_pipeline
+
+import whisper
+import whisper.utils as wutils
 from tinydiarize.score import score_fstalign
 
 DESCRIPTION = """
@@ -29,7 +30,7 @@ def setup_logging(output_dir, audio_name):
         level=logging.DEBUG,
     )
     # setup logging to also write to file in output_dir with same format as console
-    fh = logging.FileHandler(f"{output_dir}/run_pipelines-{audio_name}.log")
+    fh = logging.FileHandler(f"{log_dir}/run_pipelines-{audio_name}.log")
     fh.setLevel(logging.DEBUG)
     formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s")
     fh.setFormatter(formatter)

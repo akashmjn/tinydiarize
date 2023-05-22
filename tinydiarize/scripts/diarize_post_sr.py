@@ -1,8 +1,8 @@
 # Script adapted from https://huggingface.co/spaces/dwarkesh/whisper-speaker-recognition
-
 import contextlib
 import datetime
 import json
+import logging
 import os
 import subprocess
 import wave
@@ -98,9 +98,9 @@ def add_speakers_to_segments(audio, segments, num_speakers):
     if len(segments) == 1:
         segments[0]["speaker"] = "SPEAKER 1"
     else:
-        print(f"Creating embeddings for {len(segments)} segments ..")
+        logging.info(f"Creating embeddings for {len(segments)} segments ..")
         embeddings = make_embeddings(embedding_model, wav_path, segments, duration)
-        print(f"Clustering embeddings into {num_speakers} speakers ..")
+        logging.info(f"Clustering embeddings into {num_speakers} speakers ..")
         add_speaker_labels(segments, embeddings, num_speakers)
 
     return segments
