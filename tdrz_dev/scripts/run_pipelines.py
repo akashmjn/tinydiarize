@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import sys
 from pathlib import Path
 
 import pandas as pd
@@ -9,7 +10,9 @@ from diarize_pre_sr import run_pre_sr_pipeline
 
 import whisper
 import whisper.utils as wutils
-from tinydiarize.score import score_fstalign
+
+sys.path.append(str(Path(__file__).resolve().parent.parent))
+from score import score_fstalign  # noqa: E402
 
 DESCRIPTION = """
 Script that will run the following pipelines:
@@ -162,17 +165,17 @@ if __name__ == "__main__":
         logging.info("Scoring all the results ..")
         results = []
 
-        os.chdir(Path(__file__).parent.parent)  # change to tinydiarize parent directory
+        os.chdir(Path(__file__).parent.parent)  # change to tdrz_dev parent directory
         for reco_file, scoring_mode in files_to_score:
             # convert reco_file to result_name in this way
-            # e.g. /home/whisper/tinydiarize/tiny.en/d1/f.json -> tiny.en-d1
+            # e.g. /home/whisper/tdrz_dev/tiny.en/d1/f.json -> tiny.en-d1
             result_name = "__".join(Path(reco_file).parts[-3:-1])
             logging.info(f"Scoring {result_name} with mode {scoring_mode} ..")
             result, _ = score_fstalign(
                 ref_file, reco_file, result_name, speaker_turn_mode=scoring_mode
             )
             results.append(result)
-        os.chdir(Path(__file__).parent)  # change back to tinydiarize/scripts directory
+        os.chdir(Path(__file__).parent)  # change back to tdrz_dev/scripts directory
 
         results_df = pd.concat(results)
         results_df["audio_file"] = Path(audio_file).name

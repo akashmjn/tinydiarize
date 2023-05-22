@@ -400,7 +400,7 @@ if __name__ == "__main__":
     results = []
     for reco_file in reco_files:
         # convert reco_file to result_name in this way
-        # e.g. /home/whisper/tinydiarize/tiny.en/d1/f.json -> tiny.en-d1-f
+        # e.g. /home/whisper/tdrz_dev/tiny.en/d1/f.json -> tiny.en-d1-f
         result_name = "__".join(Path(reco_file).parts[-3:]).replace(".json", "")
         df, _ = score_fstalign(
             ref_nlp,
