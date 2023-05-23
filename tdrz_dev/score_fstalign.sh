@@ -10,7 +10,7 @@ HYP=$2
 OUTDIR=$3
 FNAME=$(basename $HYP .nlp)
 
-set -x
+# set -x
 
 # the current directory is mounted as /fstalign/workdir so all relative paths have to be relative to that
 PREFIX="/fstalign/workdir"

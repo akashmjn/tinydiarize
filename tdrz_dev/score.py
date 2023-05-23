@@ -1,5 +1,6 @@
 import argparse
 import json
+import logging
 import os
 import re
 import shutil
@@ -83,7 +84,7 @@ def prepare_ref_nlp(nlp_file, output_dir=None, tag_speaker_turns=True):
             fp.write(line + "\n")
             speaker = line.split("|")[1]
 
-    print(f"Written {i+n} lines to {output_file}")
+    logging.debug(f"Written {i+n} lines to {output_file}")
     return output_file
 
 
@@ -137,7 +138,7 @@ def whisper_reco_to_nlp(reco_json, output_dir=None, speaker_turn_mode="segment")
                         fp.write(f"{ST_TOKEN}|0|||||\n")
                         n += 1
 
-    print(f"Written {n} lines to {output_file}")
+    logging.debug(f"Written {n} lines to {output_file}")
     return output_file
 
 
@@ -162,7 +163,7 @@ def strip_speaker_turn_tokens(nlp_file, output_dir=None):
             fp.write(line + "\n")
             n += 1
 
-    print(f"Written {i+n} lines to {output_file}")
+    logging.debug(f"Written {i+n} lines to {output_file}")
 
     return output_file
 
@@ -296,7 +297,7 @@ def score_fstalign(
         reco_nlp_for_wer = strip_speaker_turn_tokens(reco_nlp, wer_inputs_dir)
     elif Path(reco_file).suffix == ".json":
         # convert to nlp format
-        print("Converting reco to nlp format for scoring")
+        logging.debug(f"Converting reco to nlp format for scoring: {reco_file}")
         reco_nlp = whisper_reco_to_nlp(
             reco_file, spk_turn_inputs_dir, speaker_turn_mode=speaker_turn_mode
         )
@@ -305,7 +306,8 @@ def score_fstalign(
         )
 
     def _run_script(cmdlist):
-        print("Running command: ", cmdlist)
+        cmdlist = [str(c) for c in cmdlist]
+        logging.debug(f"Running command: {' '.join(cmdlist)}")
         result = subprocess.check_output(cmdlist).decode("utf-8").splitlines()[-1]
         assert result.startswith("RESULT="), "Unexpected output from " + SCRIPT
         result_file = result.split("=")[1]
@@ -338,18 +340,26 @@ def parse_analysis_file(sbs_analysis_file, context_lines=10):
     with open(sbs_analysis_file) as f:
         lines = f.read().splitlines()
 
+    def _get_context(i, lines, context_lines):
+        before = lines[max(0, i - context_lines) : i]
+        after = lines[i + 1 : i + context_lines + 1]
+        # apply a regex to clean up lines before and after
+        before = [re.sub(r"\t___.*", "\t\t", l) for l in before]
+        after = [re.sub(r"\t___.*", "\t\t", l) for l in after]
+        return "\n".join([*before, lines[i], *after])
+
     # save line numbers where precision/recall errors occur
     precision_errors = []
     recall_errors = []
     # TODO@Akash - add the index of the token in the reference
     for i, line in enumerate(lines):
-        if re.search(r"\tspeaker__turn\s+ERR", line):
+        if re.match(r"^.*\tspeaker__turn\s+ERR", line):  # erroneous prediction
             # also save context of lines before and after
-            context = "\n".join(lines[max(0, i - context_lines) : i + context_lines])
+            context = _get_context(i, lines, context_lines)
             precision_errors.append(dict(line=i, context=context))
-        if re.search(r"speaker__turn\t<del>", line):
+        if re.match(r"^\s+speaker__turn\t.*\s+ERR", line):  # missed label
             # also save context of 5 lines before and after
-            context = "\n".join(lines[max(0, i - context_lines) : i + context_lines])
+            context = _get_context(i, lines, context_lines)
             recall_errors.append(dict(line=i, context=context))
 
     return precision_errors, recall_errors
@@ -390,7 +400,7 @@ if __name__ == "__main__":
     results = []
     for reco_file in reco_files:
         # convert reco_file to result_name in this way
-        # e.g. /home/whisper/tinydiarize/tiny.en/d1/f.json -> tiny.en-d1-f
+        # e.g. /home/whisper/tdrz_dev/tiny.en/d1/f.json -> tiny.en-d1-f
         result_name = "__".join(Path(reco_file).parts[-3:]).replace(".json", "")
         df, _ = score_fstalign(
             ref_nlp,
