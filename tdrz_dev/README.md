@@ -12,11 +12,11 @@ This section contains code and notebooks to reproduce the results and dive deepe
 3. [Pyannote](https://github.com/pyannote/pyannote-audio) consent prerequisites:
     - visit hf.co/pyannote/speaker-diarization and accept user conditions
     - visit hf.co/pyannote/segmentation and accept user conditions
-    - visit hf.co/settings/tokens to create an access token and save it to a text file at tdrz_dev/scripts/HF_TOK.txt
+    - visit hf.co/settings/tokens to create an access token and save it to a text file at `tdrz_dev/scripts/HF_TOK.txt`.
 
 # Analysis 
 
-Code to reproduce these results and analysis in detail is available in [notebooks/analysis.ipynb](notebooks/analysis.ipynb). Code for finetuning will be released shortly.
+Code to reproduce these results and analysis in detail is available in [notebooks/analysis.ipynb](notebooks/analysis.ipynb) or [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/akashmjn/tinyDiarize/blob/main/tdrz_dev/notebooks/analysis.ipynb). Code for finetuning will also be released shortly.
 
 |model|small.en| | |small.en-tdrz|
 |:----|:----|:----|:----|:----|
