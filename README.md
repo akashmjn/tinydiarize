@@ -1,50 +1,69 @@
 # tinydiarize 🐥🗣️
 
-This is a minimal extension of OpenAI's [Whisper](https://github.com/openai/whisper) models that adds speaker diarization to transcripts via special `<|speakerturn|>` tokens. It can be used as a drop-in replacement for `whisper.transcribe` with the same API, and no extra dependencies.
+- *Speaker diarization* labels who said what in a transcript (e.g. Speaker A, Speaker B …). It is essential for conversation transcripts like meetings or podcasts.
+- *tinydiarize*  aims to be a minimal, interpretable  extension of OpenAI's [Whisper](https://github.com/openai/whisper) models that adds speaker diarization with few extra dependencies (inspired by [minGPT](https://github.com/karpathy/minGPT)).
+- This uses a finetuned model that adds special tokens to mark speaker changes [[reference]](#references). It can use *both voice and semantic context to tell speakers apart*, which is a unique benefit of this approach.
+- It needs a tiny change to the inference code (<20 lines ), and runs with minimal extra cost. This makes it easy to add to ports like [whisper.cpp](https://github.com/ggerganov/whisper.cpp) that run on consumer hardware like MacBooks and iPhones.
 
-![demo](trim-tinydiarize.gif)
-
-## Quickstart 
-
-Simply run the original setup and use the `small.en-tdrz` model instead of `small.en`. That's it! 🎉
-
-```
-pip install -e .
-whisper AUDIO --model small.en-tdrz SAME_CLI_ARGS
-```
-
-*(the code will auto-download the finetuned checkpoint, see  `whisper.__init__` for info)*
 
 ## Demo
 
-You can try it out on videos from YouTube using this notebook
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/akashmjn/tinydiarize/blob/main/notebooks/Demo_YouTube.ipynb)
-
 https://user-images.githubusercontent.com/13268767/229617067-eca0f614-d334-480d-9801-7c30d88acdc6.mp4
 
-## What is this?
+You can try it out on other such gems from YouTube using this notebook. [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/akashmjn/tinydiarize/blob/main/notebooks/Demo_YouTube.ipynb)
 
-- *Speaker diarization* is the task of identifying who spoke when in an audio recording e.g. Speaker A... Speaker B... Along with spoken content, it is a key part of creating who-spoke-what transcripts, such as those for podcasts.
-- *tinydiarize*  aims to be a minimal, interpretable  extension of original Whisper models that keeps extra dependencies to a minimum (inspired by [minGPT](https://github.com/karpathy/minGPT)).
-- It keeps the exact same Whisper model structure, with a <20 line change to the inference code [#4](https://github.com/akashmjn/tinydiarize/pull/4). This makes it easy to integrate into existing ports like [whisper.cpp](https://github.com/ggerganov/whisper.cpp) that runs on consumer hardware like MacBooks and iPhones.
-- It makes use of special `<|speakerturn|>` tokens [[reference]](#references) to tackle the task of local diarization cleanly, effectively, and at minimal extra inference cost. Stay tuned for details in an upcoming blog post! 📺
-- By also making reproducible finetuning available, we hope provide a starting point for others (or even OpenAI themselves!) to improve performance and extend support (multilingual, speech translation etc.)
 
-## More info 
-- Whisper `small.en` checkpoints were finetuned on ~100hrs of [AMI meetings](https://groups.inf.ed.ac.uk/ami/corpus/) using HuggingFace [Transformers](https://github.com/huggingface/transformers) and [Datasets](https://github.com/huggingface/datasets). With some tricks, this could be done relatively cheaply with just 30mins of 1 GPU training 😊.
-- Notably, we include scoring & analysis tools using [revdotcom/fstalign](https://github.com/revdotcom/fstalign) that allow for interpretable error inspection and side-by-side analysis.
-- For a detailed look at results see [/tdrz_dev](/tdrz_dev/). It contains a detailed Jupyter notebook with code to reproduce results and compare \& inspect errors.
-- Finetuning code will also be released shortly for full reproducibility.
+## Quickstart 
+
+Install `ffmpeg` following the [original repo](https://github.com/openai/whisper#Setup), then run:
+
+```
+pip install -e .
+whisper --model small.en-tdrz AUDIO 
+```
+
+The only change is the `small.en-tdrz` model instead of `small.en`. That's it! 🎉
+
+
+## What's included?
+
+- Finetuned checkpoint for the `small.en-tdrz` model (located [here](whisper/__init__.py)) and example inference code (relevant changes in [[#4]](https://github.com/akashmjn/tinydiarize/pull/4)).
+- Tools for comparison and analysis (located under [/tdrz_dev](tdrz_dev))):
+    - A scoring tool to measure and compare accuracy on your own data in an easy to interpret way.
+    - Reference script to run and compare various diarization pipelines.
+    - A Jupyter notebook to compare and understand performance in detail on a handful of earnings calls.
+- Finetuning code will also be made available shortly.
+
+We aim to provide a starting point enabling others (or even OpenAI themselves!) to contribute to performance improvements and extend support (multilingual, speech translation etc.).
+
+## Performance
+
+|metric|small.en|small.en-tdrz|
+|:----|:----|:----|
+|spk_turn_precision|-|98.2|
+|spk_turn_recall|-|70.8|
+|wer_overall|11.0|10.3|
+|wer_speaker_switch|15.0|15.6|
+
+On a set of 3 [earnings calls](https://github.com/revdotcom/speech-datasets/tree/main/earnings21), `tdrz` gets near-perfect speaker turn precision at fairly decent recall. A similar WER is retained as the original model. Not too shabby for a tiny finetuning setup, and <10% extra inference cost!
+
+Refer to [tdrz_dev](tdrz_dev/) for details on performance analysis and comparisons.
+
+## More info
+- Whisper `small.en` checkpoints were finetuned on ~100hrs of [AMI meetings](https://groups.inf.ed.ac.uk/ami/corpus/) using HuggingFace [Transformers](https://github.com/huggingface/transformers) and [Datasets](https://github.com/huggingface/datasets).
+- With some tricks, this could be done relatively cheaply with just 30mins of 1 GPU training starting to produce decent results. Tiny indeed 😊.
+- We make use of the excellent open-source [revdotcom/fstalign](https://github.com/revdotcom/fstalign) tool for scoring and analysis.
+-  Stay tuned for details in an upcoming blog post! 📺
 
 
 ## Gotchas
 
-Note that this is still quite WIP and there are a few things to be aware of:
-- As an initial proof-of-concept only the `small.en` English model has been finetuned.
-- Preliminary tests show similar word-error-rate (WER) as original models, although this is on a very small setup. Ad-hoc inspection shows occasional significant differences in timestamp behavior (longer segments) or deletion errors.
-- This will likely improve quite a lot with a less hacky finetuning setup.
+Note that this still an early proof-of-concept and there are a few things to be aware of:
+- Only the `small.en` English model has been finetuned.
+- Word-error-rate (WER) is close to original models, although not yet extensively tested. Ad-hoc inspection does show some differences in timestamp behavior (longer segments) or deletion errors. See the notebook under [tdrz_dev](tdrz_dev/) for details.
+- Given a pretty tiny finetuning setup, there's likely a lot of room for accuracy improvements.
 - Only local diarization (segmentation into speaker turns) is handled so far. Extension with global diarization (speaker clustering) is planned for later.
-- Stuff is still quite hacky and subject to change, so bear with us until things are stabilized! 🙏
+- Stuff is still hacky and subject to change, so hold your horses just yet! 🐎
 
 ## References
 
