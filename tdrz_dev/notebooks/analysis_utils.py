@@ -84,7 +84,7 @@ def summarize_results(results_df, omit_extra_results=True):
         .reset_index()
     )
     summary_df["value"] = round(
-        summary_df["numerator"] / summary_df["denominator"] * 100, 2
+        summary_df["numerator"] / summary_df["denominator"] * 100, 1
     )
     # print some summary statistics
     num_words = summary_df.query('metric == "wer_overall"')["denominator"].values[0]
@@ -122,24 +122,33 @@ def plot_metric_results(metric_df, title=None, ax=None, legend=True):
         _ = ax.legend(bbox_to_anchor=(1.05, 1), loc="upper left", borderaxespad=0.0)
 
 
-def inspect_errors(
-    results_df, analysis_results, result_key, precision_errors=[], recall_errors=[]
+def inspect_spk_errors(
+    results_df,
+    analysis_results,
+    result_key,
+    precision_errors=[],
+    recall_errors=[],
+    display_results=False,
 ):
     model_id, call_id, method = result_key
+    subset_df = results_df.query(
+        f'model=="{model_id}" and call_id=="{call_id}" and method=="{method}"'
+    ).iloc[:, :7]
+
+    if display_results:
+        ipd.display(subset_df)
 
     print(f"Results for: {result_key}")
-    ipd.display(
-        results_df.query(
-            f'model=="{model_id}" and call_id=="{call_id}" and method=="{method}"'
-        ).iloc[:, :7]
-    )
-
     spk_turn_errors = analysis_results[result_key]
-    print(f"Precision errors: {len(spk_turn_errors['precision_errors'])}")
-    print(f"Recall errors: {len(spk_turn_errors['recall_errors'])}")
+    precision = subset_df.query('metric == "spk_turn_precision"')["value"].values[0]
+    num_false_positives = len(spk_turn_errors["precision_errors"])
+    recall = subset_df.query('metric == "spk_turn_recall"')["value"].values[0]
+    num_false_negatives = len(spk_turn_errors["recall_errors"])
+    print(f"Precision: {precision:.2f}, # of false positives: {num_false_positives}")
+    print(f"Recall: {recall:.2f}, # of false negatives: {num_false_negatives}")
 
     if len(precision_errors) > 0:
-        print("\n", "--" * 5, "Precision errors:", "--" * 5)
+        print("\n", "--" * 5, "Spk turn precision errors:", "--" * 5)
         for idx in precision_errors:
             print(
                 f"\nLine: {spk_turn_errors['precision_errors'][idx]['line']}, Index: {idx}"
@@ -147,7 +156,7 @@ def inspect_errors(
             print(spk_turn_errors["precision_errors"][idx]["context"])
 
     if len(recall_errors) > 0:
-        print("\n", "--" * 5, "Recall errors:", "--" * 5)
+        print("\n", "--" * 5, "Spk turn recall errors:", "--" * 5)
         for idx in recall_errors:
             print(
                 f"\nLine: {spk_turn_errors['recall_errors'][idx]['line']}, Index: {idx}"

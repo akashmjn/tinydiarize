@@ -344,8 +344,8 @@ def parse_analysis_file(sbs_analysis_file, context_lines=10):
         before = lines[max(0, i - context_lines) : i]
         after = lines[i + 1 : i + context_lines + 1]
         # apply a regex to clean up lines before and after
-        before = [re.sub(r"\t___.*", "\t\t", l) for l in before]
-        after = [re.sub(r"\t___.*", "\t\t", l) for l in after]
+        before = [re.sub(r"\t___.*", "\t\t", l).replace("ERR", "") for l in before]
+        after = [re.sub(r"\t___.*", "\t\t", l).replace("ERR", "") for l in after]
         return "\n".join([*before, lines[i], *after])
 
     # save line numbers where precision/recall errors occur
