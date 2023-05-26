@@ -27,14 +27,14 @@ The only change is the `small.en-tdrz` model instead of `small.en`. That's it! �
 
 ## What's included?
 
-- Finetuned checkpoint for the `small.en-tdrz` model (located [here](whisper/__init__.py)) and example inference code (relevant changes in [[#4]](https://github.com/akashmjn/tinydiarize/pull/4)).
-- Tools for comparison and analysis (located under [/tdrz_dev](tdrz_dev))):
+- Finetuned checkpoint for the `small.en-tdrz` model (located [here](whisper/__init__.py)) and example inference code (relevant edits in [[#4]](https://github.com/akashmjn/tinydiarize/pull/4)). This doesn't require any extra dependencies.
+- Tools for comparison and analysis (under [/tdrz_dev](tdrz_dev)):
     - A scoring tool to measure and compare accuracy on your own data in an easy to interpret way.
-    - Reference script to run and compare various diarization pipelines.
-    - A Jupyter notebook to compare and understand performance in detail on a handful of earnings calls.
+    - A reference script to run and compare various diarization pipelines.
+    - A Jupyter notebook to compare and understand performance in detail.
 - Finetuning code will also be made available shortly.
 
-We aim to provide a starting point enabling others (or even OpenAI themselves!) to contribute to performance improvements and extend support (multilingual, speech translation etc.).
+We aim to provide a starting point enabling anyone (or even OpenAI themselves!) to improve performance and extend support (multilingual, speech translation etc.).
 
 ## Performance
 
@@ -45,13 +45,14 @@ We aim to provide a starting point enabling others (or even OpenAI themselves!) 
 |wer_overall|11.0|10.3|
 |wer_speaker_switch|15.0|15.6|
 
-On a set of 3 [earnings calls](https://github.com/revdotcom/speech-datasets/tree/main/earnings21), `tdrz` gets near-perfect speaker turn precision at fairly decent recall. A similar WER is retained as the original model. Not too shabby for a tiny finetuning setup, and <10% extra inference cost!
+On a (tiny) benchmark set of 3 [earnings calls](https://github.com/revdotcom/speech-datasets/tree/main/earnings21), `tdrz` gets near-perfect speaker turn precision at fairly decent recall. A similar WER is retained as the original model. Not too shabby for a tiny finetuning setup, and <10% extra inference cost!
 
 Refer to [tdrz_dev](tdrz_dev/) for details on performance analysis and comparisons.
 
 ## More info
 - Whisper `small.en` checkpoints were finetuned on ~100hrs of [AMI meetings](https://groups.inf.ed.ac.uk/ami/corpus/) using HuggingFace [Transformers](https://github.com/huggingface/transformers) and [Datasets](https://github.com/huggingface/datasets).
 - With some tricks, this could be done relatively cheaply with just 30mins of 1 GPU training starting to produce decent results. Tiny indeed 😊.
+- We used helpful tools from the OG open-source diarization toolkit [pyannote](https://github.com/pyannote/pyannote-core) for finetuning data preparation and also analyze its performance.
 - We make use of the excellent open-source [revdotcom/fstalign](https://github.com/revdotcom/fstalign) tool for scoring and analysis.
 -  Stay tuned for details in an upcoming blog post! 📺
 
