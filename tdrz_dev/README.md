@@ -10,7 +10,7 @@ This can be used to reproduce results and take a closer look at analysis from th
 
 ## Analysis 
 
-In the accompanying notebook [analysis.ipynb](https://nbviewer.org/github/akashmjn/tinydiarize/blob/proofread-1/tdrz_dev/notebooks/analysis.ipynb) ([![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/akashmjn/tinydiarize/blob/main/tdrz_dev/notebooks/analysis.ipynb)) we show that:
+In the accompanying notebook [analysis.ipynb](https://nbviewer.org/github/akashmjn/tinydiarize/blob/main/tdrz_dev/notebooks/analysis.ipynb) ([![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/akashmjn/tinydiarize/blob/main/tdrz_dev/notebooks/analysis.ipynb)) we show that:
 - Whisper models already have a good internal representation of speaker turns via both acoustic and semantic cues (much like a punctuation).
 - Their placement of `punctuation` tokens appears to be very consistent with speaker turns (high recall).
 - Whisper-produced time segments `segment_timestamped` (common workaround used [here](https://huggingface.co/spaces/vumichien/Whisper_speaker_diarization)) are not as consistent.
