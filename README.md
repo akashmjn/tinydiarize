@@ -27,7 +27,7 @@ The only change is the `small.en-tdrz` model instead of `small.en`. That's it! 
 
 ## What's included?
 
-- Finetuned checkpoint for the `small.en-tdrz` model (located [here](whisper/__init__.py)) and example inference code (relevant edits in [[#4]](https://github.com/akashmjn/tinydiarize/pull/4)). This doesn't require any extra dependencies.
+- Finetuned checkpoint for the `small.en-tdrz` model (located [here](whisper/__init__.py)) and example inference code (relevant edits in [[#4]](https://github.com/akashmjn/tinydiarize/pull/4)). This has the same dependencies as the original whisper repo.
 - Tools for comparison and analysis (under [/tdrz_dev](tdrz_dev)):
     - A scoring tool to measure and compare accuracy on your own data in an easy to interpret way.
     - A reference script to run and compare various diarization pipelines.
@@ -62,7 +62,7 @@ Refer to [tdrz_dev](tdrz_dev/) for details on performance analysis and compariso
 Note that this still an early proof-of-concept and there are a few things to be aware of:
 - Only the `small.en` English model has been finetuned.
 - Word-error-rate (WER) is close to original models, although not yet extensively tested. Ad-hoc inspection does show some differences in timestamp behavior (longer segments) or deletion errors. See the notebook under [tdrz_dev](tdrz_dev/) for details.
-- Given a pretty tiny finetuning setup, there's likely a lot of room for accuracy improvements.
+- Given a pretty tiny finetuning setup, there's likely a lot of room for further accuracy improvements.
 - Only local diarization (segmentation into speaker turns) is handled so far. Extension with global diarization (speaker clustering) is planned for later.
 - Stuff is still hacky and subject to change, so hold your horses just yet! üêé
 
