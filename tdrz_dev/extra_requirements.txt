@@ -2,4 +2,3 @@ pandas
 matplotlib
 notebook
 git+https://github.com/pyannote/pyannote-audio
-datasets

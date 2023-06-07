@@ -1,0 +1,3 @@
+datasets==2.8.0
+transformers==4.27.0
+git+https://github.com/pyannote/pyannote-core
