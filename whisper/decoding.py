@@ -471,6 +471,13 @@ class ApplyTimestampRules(LogitFilter):
                 # timestamps shouldn't decrease; forbid timestamp tokens smaller than the last
                 logits[k, self.tokenizer.timestamp_begin : timestamps[-1]] = -np.inf
 
+            # if previous token was speaker turn, sample timestamp
+            last_was_speakerturn = (
+                len(seq) >= 1 and seq[-1] == self.tokenizer.speaker_turn
+            )
+            if last_was_speakerturn:
+                logits[k, : self.tokenizer.timestamp_begin] = -np.inf
+
         if tokens.shape[1] == self.sample_begin:
             # suppress generating non-timestamp tokens at the beginning
             logits[:, : self.tokenizer.timestamp_begin] = -np.inf
