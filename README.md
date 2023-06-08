@@ -40,10 +40,10 @@ We aim to provide a starting point enabling anyone (or even OpenAI themselves!) 
 
 |metric|small.en|small.en-tdrz|
 |:----|:----|:----|
-|spk_turn_precision|-|98.2|
+|spk_turn_precision|-|97.7|
 |spk_turn_recall|-|70.8|
 |wer_overall|11.0|10.3|
-|wer_speaker_switch|15.0|15.6|
+|wer_speaker_switch|15.0|15.5|
 
 On a (tiny) benchmark set of 3 [earnings calls](https://github.com/revdotcom/speech-datasets/tree/main/earnings21), `tdrz` gets near-perfect speaker turn precision at fairly decent recall. A similar WER is retained as the original model. Not too shabby for a tiny finetuning setup, and <10% extra inference cost!
 

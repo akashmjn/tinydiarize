@@ -24,10 +24,10 @@ In the accompanying notebook [analysis.ipynb](https://nbviewer.org/github/akashm
 |:----|:----|:----|:----|:----|
 |method|punctuation|pyannote_pre_sr|segment_timestamped|tdrz_token|
 |metric| | | | |
-|spk_turn_precision|19.5|83.4|14.5|98.2|
+|spk_turn_precision|19.5|83.4|14.5|97.7|
 |spk_turn_recall|92.0|78.4|86.7|70.8|
 |wer_overall|11.0|12.9|11.0|10.3|
-|wer_speaker_switch|15.0|23.11|15.0|15.6|
+|wer_speaker_switch|15.0|23.11|15.0|15.5|
 
 ![metrics](barplots.png)
 
