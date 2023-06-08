@@ -5,11 +5,10 @@ import sys
 from pathlib import Path
 
 import pandas as pd
-from diarize_post_sr import add_speakers_to_segments
-from diarize_pre_sr import run_pre_sr_pipeline
-
 import whisper
 import whisper.utils as wutils
+from diarize_post_sr import add_speakers_to_segments
+from diarize_pre_sr import run_pre_sr_pipeline
 
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 from score import score_fstalign  # noqa: E402
@@ -165,6 +164,7 @@ if __name__ == "__main__":
         logging.info("Scoring all the results ..")
         results = []
 
+        cwd = os.getcwd()  # record the current working directory
         os.chdir(Path(__file__).parent.parent)  # change to tdrz_dev parent directory
         for reco_file, scoring_mode in files_to_score:
             # convert reco_file to result_name in this way
@@ -175,7 +175,7 @@ if __name__ == "__main__":
                 ref_file, reco_file, result_name, speaker_turn_mode=scoring_mode
             )
             results.append(result)
-        os.chdir(Path(__file__).parent)  # change back to tdrz_dev/scripts directory
+        os.chdir(cwd)  # change back
 
         results_df = pd.concat(results)
         results_df["audio_file"] = Path(audio_file).name
