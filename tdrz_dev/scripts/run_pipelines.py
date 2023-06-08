@@ -5,10 +5,11 @@ import sys
 from pathlib import Path
 
 import pandas as pd
-import whisper
-import whisper.utils as wutils
 from diarize_post_sr import add_speakers_to_segments
 from diarize_pre_sr import run_pre_sr_pipeline
+
+import whisper
+import whisper.utils as wutils
 
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 from score import score_fstalign  # noqa: E402
