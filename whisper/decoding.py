@@ -108,6 +108,9 @@ class DecodingOptions:
     without_timestamps: bool = False  # use <|notimestamps|> to sample text tokens only
     max_initial_timestamp: Optional[float] = 1.0
 
+    # speaker turn sampling
+    with_speaker_turns: bool = False  # enable <|speakerturn|> tokens (tdrz model only)
+
     # implementation details
     fp16: bool = True  # use fp16 for most of the calculation
 
@@ -437,10 +440,12 @@ class ApplyTimestampRules(LogitFilter):
         tokenizer: Tokenizer,
         sample_begin: int,
         max_initial_timestamp_index: Optional[int],
+        with_speaker_turns: Optional[bool],
     ):
         self.tokenizer = tokenizer
         self.sample_begin = sample_begin
         self.max_initial_timestamp_index = max_initial_timestamp_index
+        self.with_speaker_turns = with_speaker_turns
 
     def apply(self, logits: Tensor, tokens: Tensor):
         # suppress <|notimestamps|> which is handled by without_timestamps
@@ -471,12 +476,13 @@ class ApplyTimestampRules(LogitFilter):
                 # timestamps shouldn't decrease; forbid timestamp tokens smaller than the last
                 logits[k, self.tokenizer.timestamp_begin : timestamps[-1]] = -np.inf
 
-            # if previous token was speaker turn, sample timestamp
-            last_was_speakerturn = (
-                len(seq) >= 1 and seq[-1] == self.tokenizer.speaker_turn
-            )
-            if last_was_speakerturn:
-                logits[k, : self.tokenizer.timestamp_begin] = -np.inf
+            if self.with_speaker_turns:
+                # if previous token was speaker turn, only sample a timestamp
+                last_was_speakerturn = (
+                    len(seq) >= 1 and seq[-1] == self.tokenizer.speaker_turn
+                )
+                if last_was_speakerturn:
+                    logits[k, : self.tokenizer.timestamp_begin] = -np.inf
 
         if tokens.shape[1] == self.sample_begin:
             # suppress generating non-timestamp tokens at the beginning
@@ -557,7 +563,10 @@ class DecodingTask:
                 )
             self.logit_filters.append(
                 ApplyTimestampRules(
-                    tokenizer, self.sample_begin, max_initial_timestamp_index
+                    tokenizer,
+                    self.sample_begin,
+                    max_initial_timestamp_index,
+                    self.options.with_speaker_turns,
                 )
             )
 
@@ -606,6 +615,7 @@ class DecodingTask:
 
     def _get_suppress_tokens(self) -> Tuple[int]:
         suppress_tokens = self.options.suppress_tokens
+        with_speaker_turns = self.options.with_speaker_turns
 
         if isinstance(suppress_tokens, str):
             suppress_tokens = [int(t) for t in suppress_tokens.split(",")]
@@ -624,8 +634,8 @@ class DecodingTask:
                 self.tokenizer.translate,
                 self.tokenizer.sot,
                 self.tokenizer.sot_prev,
-                # self.tokenizer.speaker_turn,  # TODO@Akash control via user flag
             ]
+            + ([] if with_speaker_turns else [self.tokenizer.speaker_turn])
         )
         if self.tokenizer.no_speech is not None:
             # no-speech probability is collected separately

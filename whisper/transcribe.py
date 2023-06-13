@@ -137,6 +137,10 @@ def transcribe(
                     f"Detected language: {LANGUAGES[decode_options['language']].title()}"
                 )
 
+    # decode <|speakerturn|> tokens by default for tdrz (tinydiarize) models
+    if model.is_tdrz and "with_speaker_turns" not in decode_options:
+        decode_options["with_speaker_turns"] = True
+
     language: str = decode_options["language"]
     task: str = decode_options.get("task", "transcribe")
     tokenizer = get_tokenizer(model.is_multilingual, language=language, task=task)
@@ -201,16 +205,16 @@ def transcribe(
         *, start: float, end: float, tokens: torch.Tensor, result: DecodingResult
     ):
         tokens = tokens.tolist()
-        text_tokens = [
-            token
-            for token in tokens
-            if (token < tokenizer.eot) or (token == tokenizer.speaker_turn)
-        ]
+        before_speaker_turn = tokens[-2] == tokenizer.speaker_turn
+        text = tokenizer.decode([token for token in tokens if (token < tokenizer.eot)])
+        if before_speaker_turn:
+            text = text + " [SPEAKER TURN]"
         return {
             "seek": seek,
             "start": start,
             "end": end,
-            "text": tokenizer.decode(text_tokens),
+            "text": text,
+            "before_speaker_turn": before_speaker_turn,
             "tokens": tokens,
             "temperature": result.temperature,
             "avg_logprob": result.avg_logprob,
@@ -253,7 +257,6 @@ def transcribe(
             timestamp_tokens: torch.Tensor = tokens.ge(tokenizer.timestamp_begin)
             single_timestamp_ending = timestamp_tokens[-2:].tolist() == [False, True]
 
-            # TODO@Akash - double check if implicitly missing speaker turns at end of chunk
             consecutive = torch.where(timestamp_tokens[:-1] & timestamp_tokens[1:])[0]
             consecutive.add_(1)
             if len(consecutive) > 0:
@@ -317,9 +320,6 @@ def transcribe(
                 # do not feed the prompt tokens if a high temperature was used
                 prompt_reset_since = len(all_tokens)
 
-            if verbose:
-                print("-" * 25)
-
             if word_timestamps:
                 add_word_timestamps(
                     segments=current_segments,
@@ -345,6 +345,9 @@ def transcribe(
                     start, end, text = segment["start"], segment["end"], segment["text"]
                     line = f"[{format_timestamp(start)} --> {format_timestamp(end)}] {text}"
                     print(make_safe(line))
+                    if segment["before_speaker_turn"]:
+                        print(" " * 25)
+                # print("=" * 25)  # debug decoded chunk boundaries
 
             # if a segment is instantaneous or does not contain text, clear it
             for i, segment in enumerate(current_segments):
