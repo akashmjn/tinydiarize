@@ -3,7 +3,7 @@
 - *Speaker diarization* labels who said what in a transcript (e.g. Speaker A, Speaker B â€¦). It is essential for conversation transcripts like meetings or podcasts.
 - *tinydiarize*  aims to be a minimal, interpretable  extension of OpenAI's [Whisper](https://github.com/openai/whisper) models that adds speaker diarization with few extra dependencies (inspired by [minGPT](https://github.com/karpathy/minGPT)).
 - This uses a finetuned model that adds special tokens to mark speaker changes [[reference]](#references). It can use *both voice and semantic context to tell speakers apart*, which is a unique benefit of this approach.
-- It needs a tiny change to the inference code (<20 lines ), and runs with minimal extra cost. This makes it easy to add to ports like [whisper.cpp](https://github.com/ggerganov/whisper.cpp) that run on consumer hardware like MacBooks and iPhones.
+- It needs a tiny change to the inference code (<50 lines ), and runs with minimal extra cost. This makes it easy to add to ports like [whisper.cpp](https://github.com/ggerganov/whisper.cpp) that run on consumer hardware like MacBooks and iPhones.
 
 
 ## Demo
@@ -27,7 +27,7 @@ The only change is the `small.en-tdrz` model instead of `small.en`. That's it! ð
 
 ## What's included?
 
-- Finetuned checkpoint for the `small.en-tdrz` model (located [here](whisper/__init__.py)) and example inference code (relevant edits in [[#4]](https://github.com/akashmjn/tinydiarize/pull/4)). This has the same dependencies as the original whisper repo.
+- Finetuned checkpoint for the `small.en-tdrz` model (located [here](whisper/__init__.py)) and example inference code (relevant edits in [[#4]](https://github.com/akashmjn/tinydiarize/pull/4) [[#11]](https://github.com/akashmjn/tinydiarize/pull/11)). This has the same dependencies as the original whisper repo.
 - Tools for comparison and analysis (under [/tdrz_dev](tdrz_dev)):
     - A scoring tool to measure and compare accuracy on your own data in an easy to interpret way.
     - A reference script to run and compare various diarization pipelines.
@@ -40,10 +40,10 @@ We aim to provide a starting point enabling anyone (or even OpenAI themselves!) 
 
 |metric|small.en|small.en-tdrz|
 |:----|:----|:----|
-|spk_turn_precision|-|98.2|
+|spk_turn_precision|-|97.7|
 |spk_turn_recall|-|70.8|
 |wer_overall|11.0|10.3|
-|wer_speaker_switch|15.0|15.6|
+|wer_speaker_switch|15.0|15.5|
 
 On a (tiny) benchmark set of 3 [earnings calls](https://github.com/revdotcom/speech-datasets/tree/main/earnings21), `tdrz` gets near-perfect speaker turn precision at fairly decent recall. A similar WER is retained as the original model. Not too shabby for a tiny finetuning setup, and <10% extra inference cost!
 

@@ -149,6 +149,7 @@ def load_model(
     dims = ModelDimensions(**checkpoint["dims"])
     model = Whisper(dims)
     model.load_state_dict(checkpoint["model_state_dict"])
+    model.is_tdrz = "-tdrz" in name  # tinydiarize finetuned model
 
     if alignment_heads is not None:
         model.set_alignment_heads(alignment_heads)
