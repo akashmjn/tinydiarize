@@ -2,7 +2,7 @@
 
 - *Speaker diarization* labels who said what in a transcript (e.g. Speaker A, Speaker B …). It is essential for conversation transcripts like meetings or podcasts.
 - *tinydiarize*  aims to be a minimal, interpretable  extension of OpenAI's [Whisper](https://github.com/openai/whisper) models that adds speaker diarization with few extra dependencies (inspired by [minGPT](https://github.com/karpathy/minGPT)).
-- This uses a finetuned model that adds special tokens to mark speaker changes [[reference]](#references). It can use *both voice and semantic context to tell speakers apart*, which is a unique benefit of this approach.
+- This uses a finetuned model that adds special tokens to mark speaker changes [[1,2,3,4]](#references). It can use *both voice and semantic context to tell speakers apart*, which is a unique benefit of this approach.
 - It needs a tiny change to the inference code (<50 lines ), and runs with minimal extra cost. This makes it easy to add to ports like [whisper.cpp](https://github.com/ggerganov/whisper.cpp) that run on consumer hardware like MacBooks and iPhones.
 
 
@@ -52,10 +52,9 @@ Refer to [tdrz_dev](tdrz_dev/) for details on performance analysis and compariso
 ## More info
 - Whisper `small.en` checkpoints were finetuned on ~100hrs of [AMI meetings](https://groups.inf.ed.ac.uk/ami/corpus/) using HuggingFace [Transformers](https://github.com/huggingface/transformers) and [Datasets](https://github.com/huggingface/datasets).
 - With some tricks, this could be done relatively cheaply with just 30mins of 1 GPU training starting to produce decent results. Tiny indeed 😊.
-- We used helpful tools from the OG open-source diarization toolkit [pyannote](https://github.com/pyannote/pyannote-core) for finetuning data preparation and also analyze its performance.
+- We used helpful tools from [pyannote](https://github.com/pyannote/pyannote-core) (the OG open-source diarization toolkit) for finetuning data preparation and also analyze its performance.
 - We make use of the excellent open-source [revdotcom/fstalign](https://github.com/revdotcom/fstalign) tool for scoring and analysis.
 -  Stay tuned for details in an upcoming blog post! 📺
-
 
 ## Gotchas
 
@@ -66,11 +65,22 @@ Note that this still an early proof-of-concept and there are a few things to be 
 - Only local diarization (segmentation into speaker turns) is handled so far. Extension with global diarization (speaker clustering) is planned for later.
 - Stuff is still hacky and subject to change, so hold your horses just yet! 🐎
 
+## Roadmap
+- [x] inference code & demo
+- [x] scoring and analysis tools
+- [ ] *[whisper.cpp integration](https://github.com/ggerganov/whisper.cpp/issues/64)*
+- [ ] reproducible dataprep + finetuning
+- [ ] better `small.en` checkpoint
+- [ ] HuggingFace integration
+- [ ] possibly clustering with [NME-SC](https://github.com/tango4j/Auto-Tuning-Spectral-Clustering)?
+- [ ] possibly `large-v2` checkpoint?
+
 ## References
 
 [[1]](https://arxiv.org/abs/1907.05337) Joint Speech Recognition and Speaker Diarization via Sequence Transduction
 [[2]](https://arxiv.org/abs/2003.12687) Serialized Output Training for End-to-End Overlapped Speech Recognition
 [[3]](https://arxiv.org/abs/2109.11641) Turn-to-Diarize: Online Speaker Diarization Constrained by Transformer Transducer Speaker Turn Detection
+[[4]](https://arxiv.org/abs/2305.18747) Adapting Multi-Lingual ASR Models for Handling Multiple Talkers
 
 For information on the underlying Whisper model, please refer to the [original documentation (release: `20230308`)](https://github.com/openai/whisper/tree/v20230308)
 
