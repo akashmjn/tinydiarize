@@ -7,20 +7,14 @@ from typing import Any, Dict, List, Union
 import datasets
 import torch
 from tdrz_tokenizer import WhisperDiarizedTokenizer
-from transformers import (
-    Seq2SeqTrainer,
-    Seq2SeqTrainingArguments,
-    TrainerCallback,
-    TrainerControl,
-    TrainerState,
-    TrainingArguments,
-    WhisperConfig,
-    WhisperFeatureExtractor,
-    WhisperForConditionalGeneration,
-)
+from transformers import (Seq2SeqTrainer, Seq2SeqTrainingArguments,
+                          TrainerCallback, TrainerControl, TrainerState,
+                          TrainingArguments, WhisperConfig,
+                          WhisperFeatureExtractor,
+                          WhisperForConditionalGeneration)
 
-DATADIR = os.path.expanduser("~/.cache/huggingface/datasets")
-WHISPERMODEL = "openai/whisper-small.en"
+DATADIR = os.path.expanduser("/mnt/scratch/datasets")  # TODO@Akash - handle this in args
+WHISPERMODEL = "openai/whisper-small.en"               # TODO@Akash - handle this in args
 
 feature_extractor = WhisperFeatureExtractor.from_pretrained(WHISPERMODEL)
 tokenizer = WhisperDiarizedTokenizer.from_pretrained(WHISPERMODEL)
@@ -87,7 +81,7 @@ def prepare_model(model, finetune_mode="all", freeze_tokens="none"):
                 ] = 0.0  # TODO@Akash figure out why this is wrong in tokenizer
             if "time" in mode:
                 grad[tokenizer.timestamp_begin :, :] = 0.0
-            if mode == "spk_only":
+            if mode == "except_spk":
                 raise NotImplementedError
             return grad
 
@@ -165,21 +159,21 @@ if __name__ == "__main__":
     parser.add_argument(
         "--finetune_mode",
         type=str,
-        default="all",
+        default="decoder",
         choices=["all", "decoder", "embed_tokens", "embed_tokens_positions"],
     )
     # parser.add_argument("--finetune_tokens", type=str, default="all", choices=["all", "spk", "spk_time"])
     parser.add_argument(
         "--freeze_tokens",
         type=str,
-        default="none",
-        choices=["none", "bpe", "bpe_time", "spk_only"],
+        default="bpe_time",
+        choices=["none", "bpe", "bpe_time", "except_spk"],
     )
     parser.add_argument(
-        "--output_dir", type=str, default="whisper-tiny.en-finetuned/embed_tokens-1"
+        "--output_dir", type=str, default="workdir_finetune/finetune_runs"  # TODO@Akash form this using other args
     )
-    parser.add_argument("--learning_rate", type=float, default=1e-5)
-    parser.add_argument("--max_steps", type=int, default=1000)
+    parser.add_argument("--learning_rate", type=float, default=2e-5)
+    parser.add_argument("--max_steps", type=int, default=2000)
     parser.add_argument("--warmup_steps", type=int, default=200)
     parser.add_argument("--per_device_train_batch_size", type=int, default=16)
     parser.add_argument("--gradient_accumulation_steps", type=int, default=1)
@@ -192,8 +186,9 @@ if __name__ == "__main__":
     parser.add_argument("--logging_steps", type=int, default=50)
     parser.add_argument("--report_to", type=str, default="tensorboard")
     args = parser.parse_args()
-    # convert args to dict
+    # convert args to dict  # TODO@Akash: save these args in a config in the output dir
     args_dict = vars(args)
+    args_dict["output_dir"] = f'{args_dict["output_dir"]}/{WHISPERMODEL}/{args_dict["finetune_mode"]}-{args_dict["freeze_tokens"]}'
     args_dict["logging_first_step"] = True
     args_dict["per_device_eval_batch_size"] = args_dict["per_device_train_batch_size"]
     args_dict["dataloader_num_workers"] = 4
