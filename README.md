@@ -68,12 +68,15 @@ Note that this still an early proof-of-concept and there are a few things to be 
 ## Roadmap
 - [x] inference code & demo
 - [x] scoring and analysis tools
-- [ ] *[whisper.cpp integration](https://github.com/ggerganov/whisper.cpp/issues/64)*
-- [ ] reproducible dataprep + finetuning
-- [ ] better `small.en` checkpoint
+- [x] [whisper.cpp integration](https://github.com/ggerganov/whisper.cpp/pull/1058)
+- [ ] *reproducible dataprep + finetuning\**
+- [ ] *blog post explainer\**
 - [ ] HuggingFace integration
+- [ ] better LoRa-based `small.en` checkpoint
 - [ ] possibly clustering with [NME-SC](https://github.com/tango4j/Auto-Tuning-Spectral-Clustering)?
 - [ ] possibly `large-v2` checkpoint?
+
+*\* is a pointer to where I am at the moment. Contributions will be easier to make after this, and are most welcome!*
 
 ## References
 
