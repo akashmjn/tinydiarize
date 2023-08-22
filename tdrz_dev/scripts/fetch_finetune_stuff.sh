@@ -6,7 +6,7 @@ then
     echo "azcopy could not be found, installing"
     wget https://aka.ms/downloadazcopy-v10-linux -O azcopy.tar.gz
     tar -zxvf azcopy.tar.gz -C $PWD
-    AZCOPY_DIR=$(ls -d $PWD/azcopy_linux*)
+    AZCOPY_DIR=$(realpath $(ls -d $PWD/azcopy_linux*))
     export PATH=$PATH:$AZCOPY_DIR
     echo "Fetched executable at $AZCOPY_DIR"
 fi
