@@ -32,7 +32,7 @@ The only change is the `small.en-tdrz` model instead of `small.en`. That's it! ð
     - A scoring tool to measure and compare accuracy on your own data in an easy to interpret way.
     - A reference script to run and compare various diarization pipelines.
     - A Jupyter notebook to compare and understand performance in detail.
-- See [Roadmap](##Roadmap) for more info.
+- See [Roadmap](#roadmap) for more info.
 
 We aim to provide a starting point enabling anyone (or even OpenAI themselves!) to improve performance and extend support (multilingual, speech translation etc.).
 
