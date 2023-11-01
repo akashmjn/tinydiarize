@@ -32,7 +32,7 @@ The only change is the `small.en-tdrz` model instead of `small.en`. That's it! �
     - A scoring tool to measure and compare accuracy on your own data in an easy to interpret way.
     - A reference script to run and compare various diarization pipelines.
     - A Jupyter notebook to compare and understand performance in detail.
-- Finetuning code will also be made available shortly.
+- See [Roadmap](##Roadmap) for more info.
 
 We aim to provide a starting point enabling anyone (or even OpenAI themselves!) to improve performance and extend support (multilingual, speech translation etc.).
 
@@ -54,7 +54,6 @@ Refer to [tdrz_dev](tdrz_dev/) for details on performance analysis and compariso
 - With some tricks, this could be done relatively cheaply with just 30mins of 1 GPU training starting to produce decent results. Tiny indeed 😊.
 - We used helpful tools from [pyannote](https://github.com/pyannote/pyannote-core) (the OG open-source diarization toolkit) for finetuning data preparation and also analyze its performance.
 - We make use of the excellent open-source [revdotcom/fstalign](https://github.com/revdotcom/fstalign) tool for scoring and analysis.
--  Stay tuned for details in an upcoming blog post! 📺
 
 ## Gotchas
 
@@ -76,7 +75,7 @@ Note that this still an early proof-of-concept and there are a few things to be 
 - [ ] possibly clustering with [NME-SC](https://github.com/tango4j/Auto-Tuning-Spectral-Clustering)?
 - [ ] possibly `large-v2` checkpoint?
 
-*\* is a pointer to where I am at the moment. Contributions will be easier to make after this, and are most welcome!*
+*\* is a pointer to the current state of the repo. Please see https://github.com/akashmjn/tinydiarize/issues/14 for an update on plans. TLDR; things have had to be put on pause :/*
 
 ## References
 
