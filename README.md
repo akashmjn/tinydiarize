@@ -3,7 +3,8 @@
 - *Speaker diarization* labels who said what in a transcript (e.g. Speaker A, Speaker B â€¦). It is essential for conversation transcripts like meetings or podcasts.
 - *tinydiarize*  aims to be a minimal, interpretable  extension of OpenAI's [Whisper](https://github.com/openai/whisper) models that adds speaker diarization with few extra dependencies (inspired by [minGPT](https://github.com/karpathy/minGPT)).
 - This uses a finetuned model that adds special tokens to mark speaker changes [[1,2,3,4]](#references). It can use *both voice and semantic context to tell speakers apart*, which is a unique benefit of this approach.
-- It needs a tiny change to the inference code (<50 lines ), and runs with minimal extra cost. This makes it easy to add to ports like [whisper.cpp](https://github.com/ggerganov/whisper.cpp) that run on consumer hardware like MacBooks and iPhones.
+- You can refer to [tdrz_dev](https://github.com/akashmjn/tinydiarize/tree/main/tdrz_dev) for a detailed analysis of performance. Note that this is intended to be a prototype/proof-of-concept.
+- Experimental support is also added to [whisper.cpp](https://github.com/ggerganov/whisper.cpp#speaker-segmentation-via-tinydiarize-experimental) so this can run on consumer hardware like MacBooks and iPhones. A tiny change is needed to original inference code (<50 lines), enabling simple and cheap speaker segmentation, compared with conventional approaches.
 
 
 ## Demo
@@ -34,7 +35,7 @@ The only change is the `small.en-tdrz` model instead of `small.en`. That's it! ð
     - A Jupyter notebook to compare and understand performance in detail.
 - See [Roadmap](#roadmap) for more info.
 
-We aim to provide a starting point enabling anyone (or even OpenAI themselves!) to improve performance and extend support (multilingual, speech translation etc.).
+We aim to demonstrate a starting point enabling anyone (or even OpenAI themselves!) to improve performance and extend support (multilingual, speech translation etc.).
 
 ## Performance
 
@@ -89,3 +90,17 @@ For information on the underlying Whisper model, please refer to the [original d
 ## License
 
 Code and model weights are released under the MIT License. See [LICENSE](https://github.com/openai/whisper/blob/main/LICENSE) for further details.
+
+## Citation
+
+If you please to use this in your research, you can cite this work as 
+```
+@software{mahajan2023tinydiarize,
+  author = {Mahajan, Akash},
+  month = {08},
+  title = {tinydiarize: Minimal extension of Whisper for speaker segmentation with special tokens},
+  url = {https://github.com/akashmjn/tinyDiarize},
+  year = {2023}
+}
+```
+
